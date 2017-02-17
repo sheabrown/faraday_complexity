@@ -3,3 +3,7 @@ This project is an attempt to create a machine-learning algorithm (binary classi
 Bellow is an example of a simple Faraday thin source produced with create_spectrum.py
 
 ![alt tag](https://github.com/sheabrown/faraday_complexity/blob/master/rm_spectrum.png)
+
+Here is a two component source, also created with create_spectrum.py
+
+![alt tag](https://github.com/sheabrown/faraday_complexity/blob/master/far_2comp.png)
