@@ -7,4 +7,4 @@ Bellow is an example of a simple Faraday thin source produced with create_spectr
 Here is a two component source, also created with create_spectrum.py, that has one component at 7 rad/m^2 and another at 40 rad/m^2. The frequency coverage mimics what will be available for POSSUM Early Science, though there could be an option to fill in the missing frequencies in some cases. 
 
 ![alt tag](https://github.com/sheabrown/faraday_complexity/blob/master/QU_2.png)
-![alt tag](https://github.com/sheabrown/faraday_complexity/blob/master/far_2.png)
+![alt tag](https://github.com/sheabrown/faraday_complexity/blob/master/Far_2.png)
