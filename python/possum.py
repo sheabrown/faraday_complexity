@@ -15,6 +15,7 @@ class possum:
 		Create the WRST frequency spectrum:
 			310 - 380 MHz
 		"""
+		self.nu_ = self._createFrequency(310., 380., nchan=400)
 
 	def _createASKAP12(self, *args):
 		"""
@@ -79,7 +80,8 @@ class possum:
 		# ======================================
 		return np.arange(nchan)*(numax-numin)/(nchan-1) + numin
 
-		
+
+
 
 	def _createNspec(self, flux, depth, chi):
 		"""
@@ -105,24 +107,40 @@ class possum:
 		P = flux.T * np.exp(2j * (chi + depth * np.square(self.__c / nu)))
 
 		# ======================================
-		#	Normalize the polarization so that
-		#	the peak is equal to 1
-		# ======================================
-		P /= P.max()
-
-		# ======================================
 		#	Save the polarization
 		# ======================================
-		self.Polarization_ = np.ravel(P)
-		
+		self.polarization_ = np.ravel(P)
+
+
+	def _createFaradaySpectrum(self, philo=-1000, phihi=1000):
+		"""
+		Function for creating the Faraday spectrum
+		"""
+
+		F = []
+		phi = []
+		chiSq = np.mean( (self.__c / self.nu_)**2)
+
+		for far in range(philo, phihi):
+			phi.append(far)
+
+			temp = np.exp(-2j * far * ((self.__c / self.nu_)**2 - chiSq))
+			temp = np.sum( self.polarization_ * temp)
+			F.append(temp)
+
+		self.phi_ = np.asarray(phi)
+		self.faraday_ = np.asarray(F) / len(self.nu_)
+
+
 	def _addNoise(self, sigma):
 		pass
 
-flux = np.array([1, 0.5, 0.3])
-depth = np.array([-10, 10, 3])
-chi = np.array([0.0, 0.5, 0.2])
+flux = np.array([1, 1])
+depth = np.array([7, 40])
+chi = np.array([0, 0])
 
 
 spec = possum()
-spec._createASKAP36()
+spec._createASKAP12()
 spec._createNspec(flux, depth, chi)
+spec._createFaradaySpectrum()
