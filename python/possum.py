@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 
 class possum:
 	"""
@@ -83,7 +84,7 @@ class possum:
 
 
 
-	def _createNspec(self, flux, depth, chi):
+	def _createNspec(self, flux, depth, chi, sigma=0):
 		"""
 		Function for generating N faraday spectra
 		and merging
@@ -93,8 +94,9 @@ class possum:
 
 		Parameters:
 			flux 		[float, array]
-			depth
+			depth		[float, array]
 			chi			[float, array]
+			sigma		[float, const]
 		"""
 		# ======================================
 		#	Convert inputs to matrices
@@ -104,12 +106,22 @@ class possum:
 		chi   = np.asmatrix(chi).T
 		depth = np.asmatrix(depth).T
 
+		# ======================================
+		#	Compute the polarization
+		# ======================================
 		P = flux.T * np.exp(2j * (chi + depth * np.square(self.__c / nu)))
+		P = np.ravel(P)
 
 		# ======================================
-		#	Save the polarization
+		#	Add Gaussian noise
 		# ======================================
-		self.polarization_ = np.ravel(P)
+		if sigma != 0:
+			P += self._addNoise(sigma, P.size)
+
+		# ======================================
+		#	Store the polarization
+		# ======================================
+		self.polarization_ = P
 
 
 	def _createFaradaySpectrum(self, philo=-1000, phihi=1000):
@@ -132,15 +144,43 @@ class possum:
 		self.faraday_ = np.asarray(F) / len(self.nu_)
 
 
-	def _addNoise(self, sigma):
-		pass
+	def _addNoise(self, sigma, N):
+		"""
+		Function for adding real and 
+		imaginary noise
 
-flux = np.array([1, 1])
-depth = np.array([7, 40])
-chi = np.array([0, 0])
+		To call:
+			_addNoise(sigma, N)
 
+		Parameters:
+			sigma
+			N
+		"""
+		noiseReal = np.random.normal(scale=sigma, size=N)
+		noiseImag = 1j * np.random.normal(scale=sigma, size=N)
+
+		return(noiseReal + noiseImag)
+
+
+
+
+# ======================================================
+#   Try to recreate figure 21 in Farnsworth et. al (2011)
+#
+#   Haven't been able to get the large offset; 
+#   peak appears between the two RM components
+# ======================================================
+
+flux = [1, 1.0]
+depth = [-2.9, -0.05]
+chi = [0, 1.5]
+sig = 0.5
 
 spec = possum()
-spec._createASKAP12()
-spec._createNspec(flux, depth, chi)
+spec._createWSRT()
+spec._createNspec(flux, depth, chi, sig)
 spec._createFaradaySpectrum()
+
+plt.plot(spec.phi_, np.abs(spec.faraday_) / np.abs(spec.faraday_).max())
+plt.xlim(-50, 50)
+plt.show()
