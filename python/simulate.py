@@ -6,16 +6,16 @@ class simulate():
 		pass
 
 	def __randDepth(self, size, depthMin=-15, depthMax=15):
-		return depthMin + (depthMax - depthMin) * np.random.rand(size)
+		return np.random.uniform(depthMin, depthMax, size)
 
-	def __randFlux(self, size):
-		return np.random.rand(size)
+	def __randFlux(self, size, fluxMin=0.01, fluxMax=1):
+		return np.random.uniform(fluxMin, fluxMax, size)
 
-	def __randChi(self, size):
-		return 2*np.pi*np.random.rand(size)
+	def __randChi(self, size, chiMin=0, chiMax=2*np.pi):
+		return np.random.uniform(chiMin, chiMax, size)
 
 	def __randNoise(self, size, noiseMin=0.1, noiseMax=1.0):
-		return noiseMin + (noiseMax - noiseMin) * np.random.rand(size)
+		return np.random.uniform(noiseMin, noiseMax, size)
 
 
 	def generateParams(self, N, depthMin=-15, depthMax=15, pcomplex=0.35):
