@@ -3,7 +3,23 @@ import matplotlib.pyplot as plt
 
 class possum:
 	"""
-	Class for creating spectra
+	Class for creating polarization and 
+	faraday rotation spectra.
+
+	Frequency Coverages:
+		_createWSRT()
+			Frequency range for the Westerbork
+			Synthesis Radio Telescope 
+				310 - 380 MHz
+	
+		_createASKAP12()
+			ASKAP12 frequency coverage
+				700 - 1300 MHz
+				1500 - 1800 MHz
+
+		_createASKAP36()
+			ASKAP36 frequency coverage 
+				1330 - 1430 MHz
 	"""
 
 	def __init__(self):
@@ -13,7 +29,7 @@ class possum:
 
 	def _createWSRT(self, *args):
 		"""
-		Create the WRST frequency spectrum:
+		Create the WSRT frequency spectrum:
 			310 - 380 MHz
 		"""
 		self.nu_ = self._createFrequency(310., 380., nchan=400)
@@ -79,7 +95,7 @@ class possum:
 		#	Generate an evenly spaced grid
 		#	of frequencies and return
 		# ======================================
-		return np.arange(nchan)*(numax-numin)/(nchan-1) + numin
+		return(np.arange(nchan)*(numax-numin)/(nchan-1) + numin)
 
 
 
@@ -171,16 +187,18 @@ class possum:
 #   peak appears between the two RM components
 # ======================================================
 
-flux = [1, 1.0]
-depth = [-2.9, -0.05]
-chi = [0, 1.5]
-sig = 0.5
+if __name__ == '__main__':
 
-spec = possum()
-spec._createWSRT()
-spec._createNspec(flux, depth, chi, sig)
-spec._createFaradaySpectrum()
+	flux = [1, 1.0]
+	depth = [-2.9, -0.05]
+	chi = [0, 1.5]
+	sig = 0.5
 
-plt.plot(spec.phi_, np.abs(spec.faraday_) / np.abs(spec.faraday_).max())
-plt.xlim(-50, 50)
-plt.show()
+	spec = possum()
+	spec._createWSRT()
+	spec._createNspec(flux, depth, chi, sig)
+	spec._createFaradaySpectrum()
+
+	plt.plot(spec.phi_, np.abs(spec.faraday_) / np.abs(spec.faraday_).max())
+	plt.xlim(-50, 50)
+	plt.show()

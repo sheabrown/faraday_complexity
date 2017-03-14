@@ -1,6 +1,6 @@
 import numpy as np
 
-class simulate():
+class simulate:
 	
 	def __init__(self):
 		pass
@@ -18,14 +18,35 @@ class simulate():
 		return np.random.uniform(noiseMin, noiseMax, size)
 
 
-	def generateParams(self, N, depthMin=-15, depthMax=15, pcomplex=0.35):
+	def _generateParams(self, N, depthMin=-15, depthMax=15, pcomplex=0.35):
 		"""
-		Generates N spectra 
+		Generates parameters for N faraday spectra,
+		with the probability of the source being
+		complex given by "pcomplex".
+
+		To call:
+			_generateParams(N, depthMin, depthMax, pcomplex)
+
+		Parameters:
+			N				number of parameter sets to generate
+			depthMin
+			depthMax
+			pcomplex		probability the source is complex
+
+		Stored Variables:
+			chi_			phase offset (tuple if complex)
+			depth_			faraday depth (tuple if complex)
+			flux_			polarization flux (tuple if complex)
+			label_			complex (1) or simple (0)
+			sig_			noise
+
+		Postcondition:
+			The ...
 		"""
 		depth = self.__randDepth(N).astype('object')
 		flux  = self.__randFlux(N).astype('object')
 		chi   = self.__randChi(N).astype('object')
-		sig   = self.__randNoise(N)		#	Any need to store?
+		sig   = self.__randNoise(N)
 
 		# ===========================================
 		#	Array of labels (1 = complex, 0 = single)
@@ -54,8 +75,10 @@ class simulate():
 		self.label_ = label
 
 
-test = simulate()
-test.generateParams(100)
+if __name__ == '__main__':
+
+	test = simulate()
+	test._generateParams(100)
 
 		
 		
