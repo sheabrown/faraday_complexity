@@ -64,9 +64,9 @@ class simulate:
 		loc = np.where(label == 1)[0]
 		size = len(loc)
 
-		depth[loc] = zip(depth[loc], self.__randDepth(size))
-		flux[loc]  = zip(flux[loc],  self.__randFlux(size))
-		chi[loc]   = zip(chi[loc],   self.__randChi(size))
+		depth[loc] = list(zip(depth[loc], self.__randDepth(size)))
+		flux[loc]  = list(zip(flux[loc],  self.__randFlux(size)))
+		chi[loc]   = list(zip(chi[loc],   self.__randChi(size)))
 
 
 		# ===========================================
