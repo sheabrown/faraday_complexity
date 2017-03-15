@@ -1,7 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-class possum:
+from simulate import simulate
+
+class possum(simulate):
 	"""
 	Class for creating polarization and 
 	faraday rotation spectra.
@@ -19,7 +21,7 @@ class possum:
 
 		_createASKAP36()
 			ASKAP36 frequency coverage 
-				1330 - 1430 MHz
+				1130 - 1430 MHz
 	"""
 
 	def __init__(self):
@@ -155,9 +157,11 @@ class possum:
 			temp = np.exp(-2j * far * ((self.__c / self.nu_)**2 - chiSq))
 			temp = np.sum( self.polarization_ * temp)
 			F.append(temp)
+		
+		faraday = np.asarray(F) / len(self.nu_)
 
 		self.phi_ = np.asarray(phi)
-		self.faraday_ = np.asarray(F) / len(self.nu_)
+		self.faraday_ = faraday / np.abs(faraday).max()
 
 
 	def _addNoise(self, sigma, N):
@@ -199,6 +203,6 @@ if __name__ == '__main__':
 	spec._createNspec(flux, depth, chi, sig)
 	spec._createFaradaySpectrum()
 
-	plt.plot(spec.phi_, np.abs(spec.faraday_) / np.abs(spec.faraday_).max())
+	plt.plot(spec.phi_, np.abs(spec.faraday_))
 	plt.xlim(-50, 50)
 	plt.show()

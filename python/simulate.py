@@ -1,6 +1,10 @@
 import numpy as np
 
 class simulate:
+	"""
+	Class for generating spectra parameters
+	for simulating.
+	"""
 	
 	def __init__(self):
 		pass
@@ -73,6 +77,70 @@ class simulate:
 		self.chi_   = chi
 		self.sig_   = sig
 		self.label_ = label
+
+
+	def _simulateNspec(self, N, pcomplex=0.35, seed=8008):
+		"""
+		Function for generating 
+		"""
+		# ===========================================
+		#	Set the seed
+		# ===========================================
+		np.random.seed(seed)		
+
+		# ===========================================
+		#	Test if _generateParams has been called
+		# ===========================================
+		try:
+			self.label_
+		except:
+			self._generateParams(N, pcomplex=pcomplex)
+
+		# ===========================================
+		#	Test to see if a spectral range has been
+		#	set; if not, use ASKAP12
+		# ===========================================
+		try:
+			self.nu_
+		except:
+			self._createASKAP12()
+
+
+		# ===========================================
+		#	Create variables to hold the values
+		# ===========================================
+		X = np.zeros((N,2), dtype='object')
+		Q = np.zeros(N, dtype='object')
+		U = np.zeros(N, dtype='object')
+		
+		for itr in range(N):
+			# =======================================
+			#	Create the polarization spectrum
+			# =======================================
+			self._createNspec(	
+					self.flux_[itr], 
+					self.depth_[itr], 
+					self.chi_[itr], 
+					self.sig_[itr]		)
+
+			# =======================================
+			#	Compute the faraday spectrum
+			# =======================================
+			self._createFaradaySpectrum()
+
+
+			# =======================================
+			#	Store the results in an array
+			# =======================================
+			Q[itr] = self.polarization_.real
+			U[itr] = self.polarization_.imag
+
+			X[itr,0] = self.faraday_.real
+			X[itr,1] = self.faraday_.imag
+
+		self.Q_ = Q
+		self.U_ = U
+		self.X_ = X
 
 
 if __name__ == '__main__':
