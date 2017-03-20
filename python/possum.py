@@ -193,6 +193,15 @@ class possum(simulate):
 
 if __name__ == '__main__':
 
+	spec = possum()
+	spec._simulateNspec(5)
+	plt.plot(spec.X_[1,:,0], 'r-', label='real')
+	plt.plot(spec.X_[1,:,1], 'b-', label='imag')
+	plt.plot(np.abs(spec.X_[1,:,0] + 1j*spec.X_[1,:,1]), 'k--', label='abs')
+	plt.legend(loc='best')
+	plt.show()
+
+	"""
 	flux = [1, 1.0]
 	depth = [-2.9, -0.05]
 	chi = [0, 1.5]
@@ -206,3 +215,4 @@ if __name__ == '__main__':
 	plt.plot(spec.phi_, np.abs(spec.faraday_))
 	plt.xlim(-50, 50)
 	plt.show()
+	"""

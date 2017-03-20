@@ -79,9 +79,19 @@ class simulate:
 		self.label_ = label
 
 
-	def _simulateNspec(self, N, pcomplex=0.35, seed=8008):
+	def _simulateNspec(self, N, pcomplex=0.35, width=50, seed=8008):
 		"""
-		Function for generating 
+		Function for generating N polarization
+		and Faraday spectra. 
+
+		To call:
+			_simulateNspec(N, pcomplex, width, seed)
+
+		Parameters:
+			N			number of spectra
+			pcomplex	probabililty the source is complex
+			width		
+			seed		random number seed
 		"""
 		# ===========================================
 		#	Set the seed
@@ -105,6 +115,49 @@ class simulate:
 		except:
 			self._createASKAP12()
 
+		# ===========================================
+		#	Create variables to hold the values
+		# ===========================================
+		X = np.zeros((N, 2*width + 1, 2), dtype='float')
+		Q = np.zeros(N, dtype='object')
+		U = np.zeros(N, dtype='object')
+
+		for itr in range(N):
+			# =======================================
+			#	Create the polarization spectrum
+			# =======================================
+			self._createNspec(	
+					self.flux_[itr], 
+					self.depth_[itr], 
+					self.chi_[itr], 
+					self.sig_[itr]		)
+
+
+			# =======================================
+			#	Compute the faraday spectrum
+			# =======================================
+			self._createFaradaySpectrum()
+
+			# =======================================
+			#	Find the peak in the spectra 
+			#	(average if multiple peaks)
+			# =======================================
+			faraday = np.abs(self.faraday_)
+			loc = np.where(faraday == faraday.max())[0]
+			loc = int(np.mean(loc))
+
+
+			# =======================================
+			#	Store the results in an array
+			# =======================================
+
+			X[itr, :, 0] = self.faraday_.real[loc-width:loc+width+1]
+			X[itr, :, 1] = self.faraday_.imag[loc-width:loc+width+1]
+
+			Q[itr] = self.polarization_.real
+			U[itr] = self.polarization_.imag
+
+		""" OLD 
 
 		# ===========================================
 		#	Create variables to hold the values
@@ -137,6 +190,8 @@ class simulate:
 
 			X[itr,0] = self.faraday_.real
 			X[itr,1] = self.faraday_.imag
+		"""
+
 
 		self.Q_ = Q
 		self.U_ = U
