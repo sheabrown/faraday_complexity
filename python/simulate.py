@@ -79,19 +79,22 @@ class simulate:
 		self.label_ = label
 
 
-	def _simulateNspec(self, N, pcomplex=0.35, width=50, seed=8008):
+	def _simulateNspec(self, N, pcomplex=0.35, width=50, seed=8008, save=False, outdir='./'):
 		"""
 		Function for generating N polarization
 		and Faraday spectra. 
 
 		To call:
-			_simulateNspec(N, pcomplex, width, seed)
+			_simulateNspec(N, pcomplex, width, seed, 
+						save=False, outdir='./')
 
 		Parameters:
 			N			number of spectra
 			pcomplex	probabililty the source is complex
-			width		
+			width		width of faraday spectra to grab
 			seed		random number seed
+			save		save parameters (boolean)
+			outdir		directory to save parameters
 		"""
 		# ===========================================
 		#	Set the seed
@@ -157,6 +160,9 @@ class simulate:
 			Q[itr] = self.polarization_.real
 			U[itr] = self.polarization_.imag
 
+
+
+
 		""" OLD 
 
 		# ===========================================
@@ -196,6 +202,21 @@ class simulate:
 		self.Q_ = Q
 		self.U_ = U
 		self.X_ = X
+
+
+		# =======================================
+		#	Save the data in an array
+		# =======================================
+		if save:
+			np.save(outdir + "X_data.npy", self.X_)
+			np.save(outdir + "label.npy", self.label_)
+			np.save(outdir + "depth.npy", self.depth_)
+			np.save(outdir + "flux.npy", self.flux_)
+			np.save(outdir + "chi.npy", self.chi_)
+			np.save(outdir + "sig.npy", self.sig_)
+
+
+
 
 
 if __name__ == '__main__':
