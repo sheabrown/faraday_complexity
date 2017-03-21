@@ -108,10 +108,6 @@ class simulate:
 			save		save parameters (boolean)
 			outdir		directory to save parameters
 		"""
-		# ===========================================
-		#	Set the seed
-		# ===========================================
-		np.random.seed(seed)
 
 		# ===========================================
 		#	Test if _generateParams has been called
