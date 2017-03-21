@@ -22,7 +22,7 @@ class simulate:
 		return np.random.uniform(noiseMin, noiseMax, size)
 
 
-	def _generateParams(self, N, depthMin=-15, depthMax=15, pcomplex=0.35):
+	def _generateParams(self, N, depthMin=-15, depthMax=15, pcomplex=0.35, seed=8595):
 		"""
 		Generates parameters for N faraday spectra,
 		with the probability of the source being
@@ -47,6 +47,15 @@ class simulate:
 		Postcondition:
 			The ...
 		"""
+
+		# ===========================================
+		#	Set the random seed
+		# ===========================================
+		np.random.seed(seed)
+
+		# ===========================================
+		#	Generate parameters for the first comp.
+		# ===========================================
 		depth = self.__randDepth(N).astype('object')
 		flux  = self.__randFlux(N).astype('object')
 		chi   = self.__randChi(N).astype('object')
@@ -79,17 +88,20 @@ class simulate:
 		self.label_ = label
 
 
-	def _simulateNspec(self, N, pcomplex=0.35, width=50, seed=8008, save=False, outdir='./'):
+	def _simulateNspec(self, N=5, pcomplex=0.35, width=50, seed=8008, save=False, outdir='./'):
 		"""
 		Function for generating N polarization
-		and Faraday spectra. 
+		and Faraday spectra. If the parameters
+		are already stored (self._generateParams), 
+		then N is automatically set to the correct 
+		length.
 
 		To call:
 			_simulateNspec(N, pcomplex, width, seed, 
 						save=False, outdir='./')
 
 		Parameters:
-			N			number of spectra
+			N			number of spectra (if not stored)
 			pcomplex	probabililty the source is complex
 			width		width of faraday spectra to grab
 			seed		random number seed
@@ -99,15 +111,16 @@ class simulate:
 		# ===========================================
 		#	Set the seed
 		# ===========================================
-		np.random.seed(seed)		
+		np.random.seed(seed)
 
 		# ===========================================
 		#	Test if _generateParams has been called
 		# ===========================================
 		try:
 			self.label_
+			N = len(self.label_)
 		except:
-			self._generateParams(N, pcomplex=pcomplex)
+			self._generateParams(N, pcomplex=pcomplex, seed=seed)
 
 		# ===========================================
 		#	Test to see if a spectral range has been
