@@ -1,4 +1,5 @@
 import numpy as np
+import time
 
 class simulate:
 	"""
@@ -85,7 +86,7 @@ class simulate:
 		self.label_ = label
 
 
-	def _simulateNspec(self, N=5, pcomplex=0.35, width=50, seed=8008, save=False, outdir='./'):
+	def _simulateNspec(self, N=5, pcomplex=0.35, width=50, seed=8008, save=False, outdir='./', timeit=False):
 		"""
 		Function for generating N polarization
 		and Faraday spectra. If the parameters
@@ -104,6 +105,7 @@ class simulate:
 			seed		random number seed
 			save		save parameters (boolean)
 			outdir		directory to save parameters
+			timeit		keep track of time to run (boolean)
 		"""
 
 		# ===========================================
@@ -131,7 +133,13 @@ class simulate:
 		Q = []
 		U = []
 
+		if timeit:
+			start = time.perf_counter()
+
 		for itr in range(N):
+			if ((itr+1) % 100) == 0:
+				print("{:d} of {:d}".format(itr+1, N))
+
 			# =======================================
 			#	Create the polarization spectrum
 			# =======================================
@@ -151,10 +159,20 @@ class simulate:
 			#	Find the peak in the spectra 
 			#	(average if multiple peaks)
 			# =======================================
+
+			""" Currently, peak centering may chose a noisy
+			peak off to the sides, and miss the true peak.
+			"""
+
+			"""			
 			faraday = np.abs(self.faraday_)
 			loc = np.where(faraday == faraday.max())[0]
 			loc = int(np.mean(loc))
-
+			"""
+			try:
+				loc
+			except:
+				loc = int(0.5 * len(self.faraday_))
 
 			# =======================================
 			#	Store the results in an array
@@ -224,6 +242,10 @@ class simulate:
 			np.save(outdir + "chi.npy", self.chi_)
 			np.save(outdir + "sig.npy", self.sig_)
 
+
+		if timeit:
+			time2run = time.perf_counter() - start
+			print("It took {:.1f} minutes to run".format(time2run/60.)) 
 
 
 
