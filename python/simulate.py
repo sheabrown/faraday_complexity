@@ -9,7 +9,7 @@ class simulate:
 	def __init__(self):
 		pass
 
-	def __randDepth(self, size, depthMin=-15, depthMax=15):
+	def __randDepth(self, size, depthMin=-20, depthMax=20):
 		return np.random.uniform(depthMin, depthMax, size)
 
 	def __randFlux(self, size, fluxMin=0.01, fluxMax=1):
@@ -43,9 +43,6 @@ class simulate:
 			flux_			polarization flux (tuple if complex)
 			label_			complex (1) or simple (0)
 			sig_			noise
-
-		Postcondition:
-			The ...
 		"""
 
 		# ===========================================
@@ -131,8 +128,8 @@ class simulate:
 		#	Create variables to hold the values
 		# ===========================================
 		X = np.zeros((N, 2*width + 1, 2), dtype='float')
-		Q = np.zeros(N, dtype='object')
-		U = np.zeros(N, dtype='object')
+		Q = []
+		U = []
 
 		for itr in range(N):
 			# =======================================
@@ -166,10 +163,11 @@ class simulate:
 			X[itr, :, 0] = self.faraday_.real[loc-width:loc+width+1]
 			X[itr, :, 1] = self.faraday_.imag[loc-width:loc+width+1]
 
-			Q[itr] = self.polarization_.real
-			U[itr] = self.polarization_.imag
+			Q.append(self.polarization_.real)
+			U.append(self.polarization_.imag)
 
-
+		Q = np.asarray(Q)
+		U = np.asarray(U)
 
 
 		""" OLD 
@@ -218,6 +216,8 @@ class simulate:
 		# =======================================
 		if save:
 			np.save(outdir + "X_data.npy", self.X_)
+			np.save(outdir + "Q_data.npy", self.Q_)
+			np.save(outdir + "U_data.npy", self.U_)
 			np.save(outdir + "label.npy", self.label_)
 			np.save(outdir + "depth.npy", self.depth_)
 			np.save(outdir + "flux.npy", self.flux_)
