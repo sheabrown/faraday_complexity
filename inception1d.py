@@ -41,8 +41,8 @@ X_train, y_train = shuffle(X_train, y_train, random_state=0)
 X_test, y_test = shuffle(X_test, y_test,random_state=0)
 
 #normalize the data
-X_train /= np.max(X_train); y_train /= np.max(y_train)
-X_test /= np.max(X_test); y_test /= np.max(y_test)
+X_train /= np.max(np.absolute(X_train)); y_train /= np.max(np.absolute(y_train))
+X_test /= np.max(np.absolute(X_test)); y_test /= np.max(np.absolute(y_test))
 
 # input spectrum dimensions
 spec_length = 200
