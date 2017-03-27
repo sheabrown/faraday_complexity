@@ -142,7 +142,7 @@ class possum(simulate):
 		self.polarization_ = P
 
 
-	def _createFaradaySpectrum(self, philo=-1000, phihi=1000):
+	def _createFaradaySpectrum(self, philo=-250, phihi=250):
 		"""
 		Function for creating the Faraday spectrum
 		"""
@@ -151,7 +151,7 @@ class possum(simulate):
 		phi = []
 		chiSq = np.mean( (self.__c / self.nu_)**2)
 
-		for far in range(philo, phihi):
+		for far in range(philo, phihi+1):
 			phi.append(far)
 
 			temp = np.exp(-2j * far * ((self.__c / self.nu_)**2 - chiSq))
@@ -193,16 +193,10 @@ class possum(simulate):
 
 if __name__ == '__main__':
 
-	flux = [1, 1.0]
-	depth = [-2.9, -0.05]
-	chi = [0, 1.5]
-	sig = 0.5
-
 	spec = possum()
-	spec._createWSRT()
-	spec._createNspec(flux, depth, chi, sig)
-	spec._createFaradaySpectrum()
-
-	plt.plot(spec.phi_, np.abs(spec.faraday_))
-	plt.xlim(-50, 50)
+	spec._simulateNspec(5)
+	plt.plot(spec.X_[1,:,0], 'r-', label='real')
+	plt.plot(spec.X_[1,:,1], 'b-', label='imag')
+	plt.plot(np.abs(spec.X_[1,:,0] + 1j*spec.X_[1,:,1]), 'k--', label='abs')
+	plt.legend(loc='best')
 	plt.show()
