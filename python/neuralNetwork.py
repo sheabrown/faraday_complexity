@@ -1,11 +1,11 @@
 from keras.models import Sequential
-from keras.layers import Activation, Dense, Dropout
+from keras.layers import Activation, Dense, Dropout, Flatten, Merge
 from keras.layers import Convolution1D
 from keras.layers import MaxPooling1D
-
+from time import perf_counter
 from loadData import *
 
-def neuralNetwork(loadData):
+class neuralNetwork(loadData):
 	"""
 	Class for constructing a convolutional
 	neural network (CNN) to identify simple
@@ -42,7 +42,7 @@ def neuralNetwork(loadData):
 
 		m = Sequential()
 		m.add(Convolution1D(64, filter_length=1, input_shape=input_shape))
-		m.add(Activation(act=act))
+		m.add(Activation(act))
 
 		model.append(m)
 
@@ -60,18 +60,21 @@ def neuralNetwork(loadData):
 			m.add(Activation(act))
 			model.append(m)
 
-	mergeBlock = Merge(model, mode=mode)
+		mergeBlock = Merge(model, mode=mode)
 
-	self.model_.add(mergeBlock)
+		self.model_.add(mergeBlock)
 
 
-if __name __ == '__main__':
+if __name__ == '__main__':
+
+	batch_size = 5
+	nb_classes = 2
+	nb_epoch = 150
 
 	cnn = neuralNetwork()
+	cnn._loadTrain("../data/train/X_data.npy", "../data/train/label.npy")
+	cnn._loadValid("../data/valid/X_data.npy", "../data/valid/label.npy")
 
-	cnn._loadTrain()
-
-	"""
 	cnn._inception()
 	cnn.model_.add(Convolution1D(nb_filter=1, filter_length=1, input_shape=(16,16,64), border_mode='same'))
 	cnn.model_.add(Flatten())
@@ -83,9 +86,20 @@ if __name __ == '__main__':
 	cnn.model_.add(Dropout(0.5))
 
 
-	cnn.model_.add(Dense(nb_classes))
+	cnn.model_.add(Dense(2))
 	cnn.model_.add(Activation('softmax'))
 	cnn.model_.compile(loss='binary_crossentropy',
 		          optimizer='adadelta',
 		          metrics=['binary_accuracy'])
-	"""
+
+	start = perf_counter()
+	cnn.model_.fit([cnn.trainX_]*4, cnn.trainY_, batch_size=batch_size, nb_epoch=nb_epoch,
+          	verbose=1, validation_data=([cnn.validX_]*4, cnn.validY_))
+
+	score = cnn.model_.evaluate([cnn.validX_]*4, cnn.validY_, verbose=0)
+
+	timeit = perf_counter() - start
+	print("Time to run = {:.1f}".format(timeit/60.))
+
+	print('Test score:', score[0])
+	print('Test accuracy:', score[1])

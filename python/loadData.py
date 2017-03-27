@@ -1,4 +1,5 @@
 import numpy as np
+from keras.utils import np_utils
 
 class loadData:
 	"""
@@ -13,8 +14,8 @@ class loadData:
 
 	def __load(self, features, labels):
 		features = np.load(features)
-		labels = np_utils.to_categorical(np.load(labels)
-		return (features, labels) 
+		labels = np_utils.to_categorical(np.load(labels))
+		return(features, labels) 
 
 
 	def _loadTrain(self, features, labels):
@@ -52,7 +53,7 @@ class loadData:
 		dataset.
 
 		To call:
-			_loadVAlid(features, labels)
+			_loadValid(features, labels)
 
 		Parameters:
 		"""
