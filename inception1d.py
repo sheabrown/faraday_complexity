@@ -12,6 +12,7 @@ from keras.utils import np_utils
 from keras import backend as K
 from keras.optimizers import SGD
 from sklearn.utils import shuffle
+from keras import optimizers
 
 #from load_images import loadTrainingSet, loadValidationSet, loadTestSet, rgbImage
 
@@ -35,8 +36,13 @@ y_train=np.load('y_train.npy')
 X_test=np.load('x_test.npy')
 y_test=np.load('y_test.npy')
 
+#shuffle the data randomly
 X_train, y_train = shuffle(X_train, y_train, random_state=0)
 X_test, y_test = shuffle(X_test, y_test,random_state=0)
+
+#normalize the data
+X_train /= np.max(np.absolute(X_train)); y_train /= np.max(np.absolute(y_train))
+X_test /= np.max(np.absolute(X_test)); y_test /= np.max(np.absolute(y_test))
 
 # input spectrum dimensions
 spec_length = 200
@@ -107,8 +113,10 @@ final_model.add(Dropout(0.5))
 final_model.add(Dense(nb_classes))
 final_model.add(Activation('softmax'))
 
+sgd = optimizers.SGD(lr=0.01, decay=1e-6, momentum=0.9, nesterov=True)
+
 final_model.compile(loss='binary_crossentropy',
-              optimizer='adadelta',
+              optimizer=sgd,
               metrics=['binary_accuracy'])
 
 #model.load_weights('possum_weights', by_name=False)
