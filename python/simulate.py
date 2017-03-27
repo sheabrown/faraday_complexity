@@ -1,5 +1,5 @@
 import numpy as np
-import time
+from time import perf_counter
 
 class simulate:
 	"""
@@ -86,7 +86,7 @@ class simulate:
 		self.label_ = label
 
 
-	def _simulateNspec(self, N=5, pcomplex=0.35, width=50, seed=8008, save=False, outdir='./', timeit=False):
+	def _simulateNspec(self, N=5, pcomplex=0.35, width=100, seed=8008, save=False, outdir='./', timeit=False):
 		"""
 		Function for generating N polarization
 		and Faraday spectra. If the parameters
@@ -134,10 +134,11 @@ class simulate:
 		U = []
 
 		if timeit:
-			start = time.perf_counter()
+			start = perf_counter()
 
+		print("{:d} of {:d}".format(1, N))
 		for itr in range(N):
-			if ((itr+1) % 100) == 0:
+			if ((itr+1) % 500) == 0:
 				print("{:d} of {:d}".format(itr+1, N))
 
 			# =======================================
@@ -244,7 +245,7 @@ class simulate:
 
 
 		if timeit:
-			time2run = time.perf_counter() - start
+			time2run = perf_counter() - start
 			print("It took {:.1f} minutes to run".format(time2run/60.)) 
 
 

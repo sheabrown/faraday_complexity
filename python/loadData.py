@@ -14,8 +14,9 @@ class loadData:
 
 	def __load(self, features, labels):
 		features = np.load(features)
-		labels = np_utils.to_categorical(np.load(labels))
-		return(features, labels) 
+		labels = np.load(labels)
+		classes = np_utils.to_categorical(labels)
+		return(features, classes, labels) 
 
 
 	def _loadTrain(self, features, labels):
@@ -29,7 +30,7 @@ class loadData:
 
 		Parameters:
 		"""
-		self.trainX_, self.trainY_ = self.__load(features, labels)
+		self.trainX_, self.trainY_, self.trainLabel_ = self.__load(features, labels)
 
 
 	def _loadTest(self, features, labels):
@@ -43,7 +44,7 @@ class loadData:
 
 		Parameters:
 		"""
-		self.testX_, self.testY_ = self.__load(features, labels)
+		self.testX_, self.testY_, self.testLabel_ = self.__load(features, labels)
 
 
 	def _loadValid(self, features, labels):
@@ -57,4 +58,4 @@ class loadData:
 
 		Parameters:
 		"""
-		self.validX_, self.validY_ = self.__load(features, labels)
+		self.validX_, self.validY_, self.validLabel_ = self.__load(features, labels)
