@@ -46,6 +46,46 @@ class neuralNetwork(loadData):
 
 		model.append(m)
 
+
+		# ================================================
+		#	Test to see if first run. If so, then 
+		# ================================================
+		"""
+		try:
+			self.__inputShape
+
+			for c in convl:
+				m = Sequential()
+				m.add(Convolution1D(32, filter_length=1, input_shape=input_shape))
+				m.add(Convolution1D(64, filter_length=c, subsample_length=1, border_mode=border_mode))
+				m.add(Activation(act))
+				model.append(m)
+
+			for p in pool:
+				m = Sequential()
+				m.add(MaxPooling1D(pool_length=p, stride=pool_stride, border_mode=border_mode, input_shape=input_shape))
+				m.add(Convolution1D(64, filter_length=1, border_mode=border_mode))
+				m.add(Activation(act))
+				model.append(m)
+
+		except:
+			self.__inputShape = self.trainX_.shape[1:]
+
+			for c in convl:
+				m = Sequential()
+				m.add(Convolution1D(32, filter_length=1, input_shape=self.__inputShape))
+				m.add(Convolution1D(64, filter_length=c, subsample_length=1, border_mode=border_mode))
+				m.add(Activation(act))
+				model.append(m)
+
+			for p in pool:
+				m = Sequential()
+				m.add(MaxPooling1D(pool_length=p, stride=pool_stride, border_mode=border_mode, input_shape=input_shape))
+				m.add(Convolution1D(64, filter_length=1, border_mode=border_mode))
+				m.add(Activation(act))
+				model.append(m)
+
+		"""
 		for c in convl:
 			m = Sequential()
 			m.add(Convolution1D(32, filter_length=1, input_shape=input_shape))
@@ -89,7 +129,7 @@ if __name__ == '__main__':
 
 	batch_size = 5
 	nb_classes = 2
-	nb_epoch = 5
+	nb_epoch = 100
 
 	cnn = neuralNetwork()
 	cnn._loadTrain("../data/train/X_data.npy", "../data/train/label.npy")
