@@ -1,7 +1,9 @@
 from keras.models import Model
 from keras.layers import Activation, Dense, Dropout, Flatten, Input, merge
+from keras.layers import concatenate
 from keras.layers import Convolution1D, Conv1D
 from keras.layers import MaxPooling1D
+from keras.utils import plot_model
 from time import perf_counter
 from loadData import *
 import sys
@@ -32,19 +34,21 @@ class inception(loadData):
 			self.model_
 			self.__inputShape
 
-			convl_1x1 = Conv1D(32, filter_size=1)(self.model_[-1])
-			model.append(convl_1x1)
+			convl_1x1 = Conv1D(32, kernel_size=1)(self.model_[-1])
+			#model.append(convl_1x1)
 
 			for c in convl:
-				convl_cx1 = Conv1D(64, filter_size=c, strides=1, padding=padding, activation=act)(convl_1x1)
+				convl_cx1 = Conv1D(64, kernel_size=c, strides=1, padding=padding, activation=act)(convl_1x1)
 				model.append(convl_cx1)
 
 			for p in pool:
+				pool_px1   = MaxPooling1D(pool_size=p, strides=pool_stride, padding=padding)(self.model_[-1])
 				pconvl_1x1 = Conv1D(64, kernel_size=1, padding=padding, activation=act)(pool_px1)
 				model.append(pconvl_1x1)
 
 
 		except:
+
 			self.model_ = []
 			self.__inputShape = self.trainX_.shape[1:]
 
@@ -64,8 +68,8 @@ class inception(loadData):
 				pconvl_1x1 = Conv1D(64, kernel_size=1, padding=padding, activation=act)(pool_px1)
 				model.append(pconvl_1x1)
 
-
-		self.model_.append(merge(model, mode=mode))
+		if mode.lower() == 'concat':
+			self.model_.append(concatenate(model))
 
 
 
@@ -86,7 +90,7 @@ class inception(loadData):
 	def _compile(self, classes=2, act='softmax', optimizer='adadelta', loss='binary_crossentropy', metrics=['binarcy_accuracy']):
 		self.model_.append(Dense(classes)(self.model_[-1]))
 		self.model_.append(Activation(act, name="prob_output")(self.model_[-1]))
-		self.model_ = Model(input=self.__input, output=[self.model_[-1]])
+		self.model_ = Model(inputs=self.__input, outputs=[self.model_[-1]])
 		self.model_.compile(loss=loss, optimizer=optimizer, metrics=metrics)
 
 
@@ -108,11 +112,11 @@ if __name__ == '__main__':
 	cnn._loadValid("../data/valid/X_data.npy", "../data/valid/label.npy")
 
 
-	cnn._inception()
-	cnn._inception()
+	cnn._inception(convl=[3,5], pool=[3,5])
+	cnn._inception(convl=[13,15], pool=[3,5])
 	cnn._convl1D()
 	cnn._flatten()
 	cnn._dense(512, 'relu', 0.5, 2)
 	cnn._compile(2, 'softmax', 'adadelta', 'binary_crossentropy', ['binary_accuracy'])
-	cnn._train(3,10)
-
+	#cnn._train(3,10)
+	plot_model(cnn.model_, to_file='graph.png')
