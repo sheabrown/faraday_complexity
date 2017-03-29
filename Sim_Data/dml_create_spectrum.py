@@ -10,7 +10,7 @@
 import numpy as np
 from matplotlib import pyplot as plt
 import time
-
+plt.ion()
 c     = 2.99e+08 #speed of light in m/s
 mhz   = 1.0e+06  #mega
 FWHM  = 23     # -3FWHM : 3FWHM  22.4 (use 23) rad/m**2  ##brentjens 2005 ==> page 11 deltaC=2(root3)/deltalambda
@@ -84,66 +84,113 @@ def plot_far(Faraday,phi):
 	#plt.subplots_adjust(hspace=0.5)
 	plt.show()	
 
-def simulateData(values_per_parameter):
+def createArray(values_per_parameter):
+	ranSig, ranChi, ranFd, ranFlux = values_per_parameter+1, values_per_parameter, values_per_parameter, values_per_parameter+1
+	array1=[]
+	array2=[]
+	array3=[]
+	array4=[]
+	for i in range(1,int(ranSig)):                              ##Noise variation
+		vary_sigma = i/ranSig	
+		array1.append(vary_sigma)
+	for j in range(0,int(ranChi)):                              ##Chinot variation
+		vary_chinot = j*np.pi/ranChi                            ##(0,pi) in increments dependent on the range
+	#	#vary_chinot2 = vary_chinot                             ##(0,pi) in increments dependent on the rang
+		array2.append(vary_chinot)
+	for k in range(0,int(ranFd)):                               ##Faraday Depth Variation
+		vary_fdepth = (k-(ranFd/2))*FWHM*6/ranFd                ##(-3FWHM,3FWHM) in increments dependent on the range
+	#	#vary_fdepth2 = vary_fdepth				                ##(-3FWHM,3FWHM) in increments dependent on the range
+		array3.append(vary_fdepth)
+	for l in range(1,int(ranFlux)):                             ##Flux variation
+		vary_flux = l/ranFlux                                   ##fraction of 1 (1/range)
+	#	#vary_flux2 = vary_flux                                 ##fraction of 1 (1/range)
+		array4.append(vary_flux)
+	array5=[array1,array2,array3,array4]
+	return array5
+	
+	
+def simulateData(values_per_parameter,array):
 	#Training Data
 	#Initial ranges set the size of the set
-	ranSig, ranChi, ranFd, ranFlux = values_per_parameter+1, values_per_parameter, values_per_parameter, values_per_parameter+1
+	ranChi, ranFd, ranFlux =  values_per_parameter, values_per_parameter, values_per_parameter+1
 	size = int(2*values_per_parameter**4)
 	print(size)
 	psize=size/10
 	s  = (size,200,2)                          
-	X  = np.zeros(s)                           
+	X  = np.zeros(s) 
+	X_2= np.zeros(s)
 	Y  = np.zeros(s[0])						   
 	nu = createPOSSUMSpectrum()                
 	count= 0
 	progress=0
 	#Nested For Loops
-	for i in range(1,int(ranSig)):                                     ##Noise variation
-		vary_sigma = i/ranSig                                          ##fraction of 1  (1/range)
-		for j in range(0,int(ranChi)):                                 ##Chinot variation
-			vary_chinot = j*np.pi/ranChi                               ##(0,pi) in increments dependent on the range
-			for k in range(0,int(ranFd)):                              ##Faraday Depth Variation
-				vary_fdepth = (k-(ranFd/2))*FWHM*6/ranFd               ##(-3FWHM,3FWHM) in increments dependent on the range
-				for l in range(1,int(ranFlux)):                        ##Flux variation
-					vary_flux = l/ranFlux                              ##fraction of 1 (1/range)
-					spec            = create2Spectrum(nu, flux2 = vary_flux, fdepth2 = vary_fdepth, chinot2= vary_chinot  )
-					noise1, noise2  = createNoiseSpectrum(nu, vary_sigma)
+	for i in range(len(array[0])):                                     ##Noise variation
+		for j in range(len(array[1])):                                 ##Chinot variation
+			for k in range(len(array[2])):                             ##Faraday Depth Variation
+				for l in range(len(array[3])):                         ##Flux variation
+					vary_ch = np.pi/ranChi/50*np.random.randn()
+					vary_fd = FWHM*6/ranFd/50*np.random.randn()          
+					vary_fl = 1/ranFlux/50**np.random.randn()
+
+					spec            = create2Spectrum(nu, flux2 = array[3][l]+vary_fl, fdepth2 = array[2][k]+vary_fd, chinot2= array[1][j]+vary_ch)
+					noise1, noise2  = createNoiseSpectrum(nu, array[0][i])
 					spec           += noise1+noise2*1j
 					phi, Faraday    = createFaradaySpectrum(spec, nu)
+					max = np.max(np.abs(Faraday))
+					Faraday_Normalized=Faraday/max
 					X[count,:,0]=Faraday.imag         #Imaginary component
 					X[count,:,1]=Faraday.real         #Real component
+					X_2[count,:,0]= Faraday_Normalized.imag
+					X_2[count,:,1]= Faraday_Normalized.real
 					Y[count]=1                        #Complex Spectrum (uses create2Spectrum)
 					count+=1						  #Iterate counter
 					
-					spec            = create1Spectrum(nu, flux1 = vary_flux, fdepth1 = vary_fdepth, chinot1 = vary_chinot )
-					noise3, noise4  = createNoiseSpectrum(nu,vary_sigma)
-					spec           += noise3+noise4*1j
-					phi, Faraday    = createFaradaySpectrum(spec, nu)
-					X[count,:,0]=Faraday.imag
-					X[count,:,1]=Faraday.real
-					Y[count]=0                        #Simple uses create1Spectrum
-					count+=1
 					if (count>progress):
 						print(str(count)+" / "+str(size))
 						progress+=psize
-	#shuffle the dataset but keep the types
-	np.save('x_train_unshuffled'+str(values_per_parameter)+'.npy',X)
-	np.save('y_train_unshuffled'+str(values_per_parameter)+'.npy',Y)
+						#plot_far(Faraday_Normalized,phi)
+						#plot_far(Faraday,phi)
+					
+					vary_ch = np.pi/ranChi/50*np.random.randn()
+					vary_fd = FWHM*6/ranFd/50*np.random.randn()          
+					vary_fl = 1/ranFlux/50**np.random.randn()
+
+					spec            = create1Spectrum(nu, flux1 = array[3][l]+vary_fl, fdepth1 = array[2][k]+vary_fd, chinot1 = array[1][j]+vary_ch)
+					noise3, noise4  = createNoiseSpectrum(nu,array[0][i])
+					spec           += noise3+noise4*1j
+					phi, Faraday    = createFaradaySpectrum(spec, nu)
+					max = np.max(np.abs(Faraday))
+					Faraday_Normalized=Faraday/max
+					X[count,:,0]=Faraday.imag
+					X[count,:,1]=Faraday.real
+					X_2[count,:,0]= Faraday_Normalized.imag
+					X_2[count,:,1]= Faraday_Normalized.real
+					Y[count]=0                        
+					count+=1
+		                           
 	rng_state = np.random.get_state()       
 	np.random.shuffle(X)
 	np.random.set_state(rng_state)          
 	np.random.shuffle(Y)
-	np.save('x_train'+str(values_per_parameter)+'.npy',X)
-	np.save('y_train'+str(values_per_parameter)+'.npy',Y)
+	np.random.set_state(rng_state)          
+	np.random.shuffle(X_2)
+	
+	np.save('x_7_'+str(int(values_per_parameter))+'.npy',X)
+	np.save('x_7_Normalized_'+str(int(values_per_parameter))+'.npy',X_2)
+	np.save('y_7_'+str(int(values_per_parameter))+'.npy',Y)
 	print(len(X))
 	print(count)
-for i in range(18,19):
-	print("Starting Data Simulation")
-	start_time = time.time()	
-	values_per_parameter=i
-	simulateData(values_per_parameter)
-	timing    = (time.time() - start_time)
-	seconds = round(timing % 60)
-	minutes = round(timing / 60)
-	print("--- %s minutes ---" % minutes )
-	print("--- %s seconds ---" % seconds )
+	
+i=13
+print("Starting Data Simulation")
+print(time.asctime(time.localtime()))
+start_time = time.time()	
+array=createArray(float(i))
+print(time.time() - start_time)
+print("Size of the Array: "+str(2*i**4))
+simulateData(float(i),array)
+timing    = (time.time() - start_time)
+seconds = round(timing % 60)
+minutes = round(timing / 60)
+print("--- %s minutes ---" % minutes )
+print("--- %s seconds ---" % seconds )
