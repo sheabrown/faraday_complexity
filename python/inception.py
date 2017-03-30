@@ -4,6 +4,7 @@ from keras.layers import concatenate
 from keras.layers import Convolution1D, Conv1D
 from keras.layers import MaxPooling1D
 from keras.utils import plot_model
+from sklearn.metrics import confusion_matrix
 from time import perf_counter
 from loadData import *
 import sys
@@ -16,7 +17,29 @@ class inception(loadData):
 	def __init__(self, seed=7775):
 		pass
 
-	def _inception(self, convl=[3, 5], pool=[3], act='relu', mode='concat'):
+
+	def _compile(self, classes=2, act='softmax', optimizer='adadelta', loss='binary_crossentropy', metrics=['binarcy_accuracy']):
+		self.model_.append(Dense(classes)(self.model_[-1]))
+		self.model_.append(Activation(act, name="prob_output")(self.model_[-1]))
+		self.model_ = Model(inputs=self.__input, outputs=[self.model_[-1]])
+		self.model_.compile(loss=loss, optimizer=optimizer, metrics=metrics)
+
+
+	def _convl1D(self, filters=1, kernel_size=1, input_shape=(16,16,64), padding='same'):
+		self.model_.append(Conv1D(filters=filters, kernel_size=kernel_size, input_shape=input_shape, padding=padding)(self.model_[-1]))
+
+
+	def _dense(self, z, act='relu', drop=0.5, ntimes=1):
+		for _ in range(ntimes):
+			self.model_.append(Dense(z)(self.model_[-1]))
+			if act != None: self.model_.append(Activation(act)(self.model_[-1]))
+			if drop != None: self.model_.append(Dropout(drop)(self.model_[-1]))
+
+	def _flatten(self):
+		self.model_.append(Flatten()(self.model_[-1]))
+
+
+	def _inception(self, convl=[3, 5], pool=[3], act='relu'):
 
 		# ===========================================
 		#	List for holding the blocks
@@ -35,7 +58,7 @@ class inception(loadData):
 			self.__inputShape
 
 			convl_1x1 = Conv1D(32, kernel_size=1)(self.model_[-1])
-			#model.append(convl_1x1)
+			model.append(convl_1x1)
 
 			for c in convl:
 				convl_cx1 = Conv1D(64, kernel_size=c, strides=1, padding=padding, activation=act)(convl_1x1)
@@ -53,7 +76,6 @@ class inception(loadData):
 			self.__inputShape = self.trainX_.shape[1:]
 
 			self.__input = Input(shape=self.__inputShape)
-			self.input = self.__input
 
 			
 			convl_1x1 = Conv1D(32, kernel_size=1, input_shape=self.__inputShape)(self.__input)
@@ -68,55 +90,58 @@ class inception(loadData):
 				pconvl_1x1 = Conv1D(64, kernel_size=1, padding=padding, activation=act)(pool_px1)
 				model.append(pconvl_1x1)
 
-		if mode.lower() == 'concat':
-			self.model_.append(concatenate(model))
+
+		self.model_.append(concatenate(model))
 
 
+	def _train(self, epochs, batch_size, timeit=True, save=False, ofile="wtf_weights"):
 
+		if timeit:
+			start = perf_counter()
 
-	def _flatten(self):
-		self.model_.append(Flatten()(self.model_[-1]))
-
-
-
-	def _dense(self, z, act='relu', drop=0.5, ntimes=1):
-		for _ in range(ntimes):
-			self.model_.append(Dense(z)(self.model_[-1]))
-			if act != None: self.model_.append(Activation(act)(self.model_[-1]))
-			if drop != None: self.model_.append(Dropout(drop)(self.model_[-1]))
-
-
-
-	def _compile(self, classes=2, act='softmax', optimizer='adadelta', loss='binary_crossentropy', metrics=['binarcy_accuracy']):
-		self.model_.append(Dense(classes)(self.model_[-1]))
-		self.model_.append(Activation(act, name="prob_output")(self.model_[-1]))
-		self.model_ = Model(inputs=self.__input, outputs=[self.model_[-1]])
-		self.model_.compile(loss=loss, optimizer=optimizer, metrics=metrics)
-
-
-	def _train(self, epochs, batch_size):
+		# =============================================
+		#	Test if there is a validation set to
+		#	test the accuracy. If not, use the
+		#	training set.
+		# =============================================
 		try:
 			self.validX_
 			self.model_.fit(self.trainX_, self.trainY_, batch_size=batch_size, epochs=epochs, verbose=1, validation_data=(self.validX_, self.validY_))
 		except:
 			self.model_.fit(self.trainX_, self.trainY_, batch_size=batch_size, epochs=epochs, verbose=1, validation_data=(self.trainX_, self.trainY_))
 
-	def _convl1D(self, filters=1, kernel_size=1, input_shape=(16,16,64), border_mode='same'):
-		self.model_.append(Conv1D(filters=1, kernel_size=1, input_shape=(16,16,64), padding='same')(self.model_[-1]))
+		# =============================================
+		#	Compute the training time (minutes)
+		# =============================================
+		if timeit:
+			time2run = perf_counter() - start
+			print("It took {:.1f} minutes to run".format(time2run/60.))
 
+		# =============================================
+		#	If save, output the weights to "ofile"
+		# =============================================
+		if save:
+			self.model_.save_weights(ofile)
+
+
+	def _plotModel(self, to_file='graph.png'):
+		plot_model(self.model_, to_file=to_file)
 
 
 if __name__ == '__main__':
 	cnn = inception()
 	cnn._loadTrain("../data/train/X_data.npy", "../data/train/label.npy")
 	cnn._loadValid("../data/valid/X_data.npy", "../data/valid/label.npy")
+	cnn._loadTest("../data/test/X_data.npy", "../data/test/label.npy")
 
-
-	cnn._inception(convl=[3,5], pool=[3,5])
-	cnn._inception(convl=[13,15], pool=[3,5])
+	cnn._inception(convl=[3,5], pool=[3])
 	cnn._convl1D()
 	cnn._flatten()
-	cnn._dense(512, 'relu', 0.5, 2)
+	cnn._dense(512, 'relu', 0.5, 1)
 	cnn._compile(2, 'softmax', 'adadelta', 'binary_crossentropy', ['binary_accuracy'])
-	#cnn._train(3,10)
-	plot_model(cnn.model_, to_file='graph.png')
+	cnn._plotModel(to_file='graph.png')
+
+	cnn._train(25, 5, save=True)
+
+	predicted_classes = np.argmax(cnn.model_.predict(cnn.testX_), axis=1)
+	print(confusion_matrix(cnn.testLabel_, predicted_classes))
