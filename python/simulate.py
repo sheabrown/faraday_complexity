@@ -19,7 +19,7 @@ class simulate:
 	def __randChi(self, size, chiMin=0, chiMax=2*np.pi):
 		return np.random.uniform(chiMin, chiMax, size)
 
-	def __randNoise(self, size, noiseMin=0.1, noiseMax=1.0):
+	def __randNoise(self, size, noiseMin=0.00, noiseMax=1.0):
 		return np.random.uniform(noiseMin, noiseMax, size)
 
 
