@@ -1,15 +1,14 @@
 from keras.models import Model
-from keras.layers import Activation, Dense, Dropout, Flatten, Input, merge
+from keras.layers import Activation, Dense, Dropout, Flatten, Input
 from keras.layers import concatenate
-from keras.layers import Convolution1D, Conv1D
-from keras.layers import MaxPooling1D
-from keras.utils import plot_model
-from sklearn.metrics import confusion_matrix
+from keras.layers import Conv1D, MaxPooling1D
 from time import perf_counter
 from loadData import *
+from inceptPlots import *
 import sys
 
-class inception(loadData):
+
+class inception(loadData, inceptPlots):
 	"""
 	Python class for the 1D inception model
 	"""
@@ -74,9 +73,7 @@ class inception(loadData):
 
 			self.model_ = []
 			self.__inputShape = self.trainX_.shape[1:]
-
 			self.__input = Input(shape=self.__inputShape)
-
 			
 			convl_1x1 = Conv1D(32, kernel_size=1, input_shape=self.__inputShape)(self.__input)
 			model.append(convl_1x1)
@@ -124,8 +121,28 @@ class inception(loadData):
 			self.model_.save_weights(ofile)
 
 
-	def _plotModel(self, to_file='graph.png'):
-		plot_model(self.model_, to_file=to_file)
+	def _test(self, prob=0.5):
+		"""
+		Function for computing the class probabilities.
+
+		To call:
+			_test(prob)
+
+		Parameters:
+			prob	probability threshold to declare a source "complex"
+
+		Postcondition:
+			The test probabilities have been stored in the array "testProb_"
+			The predicted classes have been stored in the array "testPred_"
+		"""
+		try:
+			self.testX_
+			self.testProb_ = self.model_.predict(self.testX_)[:,1]
+			self.testPred_ = np.where(self.testProb_ > prob, 1, 0)
+		except:
+			print("Please load a test dataset.")
+			sys.exit(1)
+
 
 
 if __name__ == '__main__':
@@ -139,9 +156,8 @@ if __name__ == '__main__':
 	cnn._flatten()
 	cnn._dense(512, 'relu', 0.5, 1)
 	cnn._compile(2, 'softmax', 'adadelta', 'binary_crossentropy', ['binary_accuracy'])
-	cnn._plotModel(to_file='graph.png')
+	#cnn._plotModel(to_file='graph.png')
 
-	cnn._train(25, 5, save=True)
-
-	predicted_classes = np.argmax(cnn.model_.predict(cnn.testX_), axis=1)
-	print(confusion_matrix(cnn.testLabel_, predicted_classes))
+	cnn._train(25, 5, save=False)
+	cnn._test(prob=0.8)
+	print(confusion_matrix(cnn.testLabel_, cnn.testPred_))
