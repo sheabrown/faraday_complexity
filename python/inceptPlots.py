@@ -12,6 +12,7 @@ class inceptPlots:
 	def _plotCNN(self, to_file='graph.png'):
 		plot_model(self.model_, to_file=to_file)
 
+
 	def _plotROC(self, data='test', save=False, to_file='roc.pdf', fontsize=20):
 		"""
 		Function for plotting the ROC curve.
@@ -69,7 +70,7 @@ class inceptPlots:
 		probs = np.arange(0.5, 1, step)
 
 		for i in probs:
-			testPred = np.where(self.testProb_ > i, 1, 0)[0]
+			testPred = np.where(self.testProb_ > i, 1, 0)
 			F1.append(f1_score(self.testLabel_, testPred))
 
 		plt.figure(1)

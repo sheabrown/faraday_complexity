@@ -158,6 +158,6 @@ if __name__ == '__main__':
 	cnn._compile(2, 'softmax', 'adadelta', 'binary_crossentropy', ['binary_accuracy'])
 	#cnn._plotModel(to_file='graph.png')
 
-	cnn._train(25, 5, save=False)
+	cnn._train(10, 5, save=False)
 	cnn._test(prob=0.8)
 	print(confusion_matrix(cnn.testLabel_, cnn.testPred_))
