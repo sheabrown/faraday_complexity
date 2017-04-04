@@ -4,11 +4,12 @@ from keras.layers import concatenate
 from keras.layers import Conv1D, MaxPooling1D
 from time import perf_counter
 from loadData import *
-from inceptPlots import *
+from plots import *
+from analysis import *
 import sys
 
 
-class inception(loadData, inceptPlots):
+class inception(loadData, plots, analysis):
 	"""
 	Python class for the 1D inception model
 	"""
@@ -25,8 +26,16 @@ class inception(loadData, inceptPlots):
 
 
 	def _convl1D(self, filters=1, kernel_size=1, input_shape=(16,16,64), padding='same'):
-		self.model_.append(Conv1D(filters=filters, kernel_size=kernel_size, input_shape=input_shape, padding=padding)(self.model_[-1]))
 
+		try:
+			self.model_
+			self.model_.append(Conv1D(filters=filters, kernel_size=kernel_size, input_shape=input_shape, padding=padding)(self.model_[-1]))
+		except:
+			self.model_ = []
+			self.__inputShape = self.trainX_.shape[1:]
+			self.__input = Input(shape=self.__inputShape)
+			
+			self.model_.append(Conv1D(filters=filters, kernel_size=kernel_size, input_shape=input_shape, padding=padding)(self.__input))
 
 	def _dense(self, z, act='relu', drop=0.5, ntimes=1):
 		for _ in range(ntimes):
@@ -91,7 +100,7 @@ class inception(loadData, inceptPlots):
 		self.model_.append(concatenate(model))
 
 
-	def _train(self, epochs, batch_size, timeit=True, save=False, ofile="wtf_weights"):
+	def _train(self, epochs, batch_size, timeit=True, save=False, ofile="wtf_weights", verbose=1):
 
 		if timeit:
 			start = perf_counter()
@@ -103,9 +112,9 @@ class inception(loadData, inceptPlots):
 		# =============================================
 		try:
 			self.validX_
-			self.model_.fit(self.trainX_, self.trainY_, batch_size=batch_size, epochs=epochs, verbose=1, validation_data=(self.validX_, self.validY_))
+			self.model_.fit(self.trainX_, self.trainY_, batch_size=batch_size, epochs=epochs, verbose=verbose, validation_data=(self.validX_, self.validY_))
 		except:
-			self.model_.fit(self.trainX_, self.trainY_, batch_size=batch_size, epochs=epochs, verbose=1, validation_data=(self.trainX_, self.trainY_))
+			self.model_.fit(self.trainX_, self.trainY_, batch_size=batch_size, epochs=epochs, verbose=verbose, validation_data=(self.trainX_, self.trainY_))
 
 		# =============================================
 		#	Compute the training time (minutes)
