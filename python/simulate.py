@@ -55,7 +55,8 @@ class simulate:
 		#	Generate parameters for the first comp.
 		# ===========================================
 		depth = self.__randDepth(N).astype('object')
-		flux  = self.__randFlux(N).astype('object')
+		#flux  = self.__randFlux(N).astype('object')
+		flux  = np.ones(N).astype('object')
 		chi   = self.__randChi(N).astype('object')
 		sig   = self.__randNoise(N)
 
@@ -170,6 +171,8 @@ class simulate:
 			loc = np.where(faraday == faraday.max())[0]
 			loc = int(np.mean(loc))
 			"""
+
+
 			try:
 				loc
 			except:
@@ -189,45 +192,10 @@ class simulate:
 		U = np.asarray(U)
 
 
-		""" OLD 
-
-		# ===========================================
-		#	Create variables to hold the values
-		# ===========================================
-		X = np.zeros((N,2), dtype='object')
-		Q = np.zeros(N, dtype='object')
-		U = np.zeros(N, dtype='object')
-		
-		for itr in range(N):
-			# =======================================
-			#	Create the polarization spectrum
-			# =======================================
-			self._createNspec(	
-					self.flux_[itr], 
-					self.depth_[itr], 
-					self.chi_[itr], 
-					self.sig_[itr]		)
-
-			# =======================================
-			#	Compute the faraday spectrum
-			# =======================================
-			self._createFaradaySpectrum()
-
-
-			# =======================================
-			#	Store the results in an array
-			# =======================================
-			Q[itr] = self.polarization_.real
-			U[itr] = self.polarization_.imag
-
-			X[itr,0] = self.faraday_.real
-			X[itr,1] = self.faraday_.imag
-		"""
-
-
 		self.Q_ = Q
 		self.U_ = U
 		self.X_ = X
+		self.S_ = np.dstack((Q,U))
 
 
 		# =======================================
@@ -237,6 +205,7 @@ class simulate:
 			np.save(outdir + "X_data.npy", self.X_)
 			np.save(outdir + "Q_data.npy", self.Q_)
 			np.save(outdir + "U_data.npy", self.U_)
+			np.save(outdir + "S_data.npy", self.S_)
 			np.save(outdir + "label.npy", self.label_)
 			np.save(outdir + "depth.npy", self.depth_)
 			np.save(outdir + "flux.npy", self.flux_)
