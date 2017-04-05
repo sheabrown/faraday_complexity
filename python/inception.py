@@ -2,7 +2,7 @@ from keras.models import Model
 from keras.layers import Activation, Dense, Dropout, Flatten, Input
 from keras.layers import concatenate
 from keras.layers import Conv1D, MaxPooling1D
-from time import perf_counter
+#from time import perf_counter
 from loadData import *
 from plots import *
 from analysis import *
@@ -23,6 +23,10 @@ class inception(loadData, plots, analysis):
 		self.model_.append(Activation(act, name="prob_output")(self.model_[-1]))
 		self.model_ = Model(inputs=self.__input, outputs=[self.model_[-1]])
 		self.model_.compile(loss=loss, optimizer=optimizer, metrics=metrics)
+		model_string = self.model_.to_yaml()
+		f = open('yaml_model','w')
+		f.write(model_string)
+		f.close()
 
 
 	def _convl1D(self, filters=1, kernel_size=1, input_shape=(16,16,64), padding='same'):
@@ -102,8 +106,8 @@ class inception(loadData, plots, analysis):
 
 	def _train(self, epochs, batch_size, timeit=True, save=False, ofile="wtf_weights", verbose=1):
 
-		if timeit:
-			start = perf_counter()
+		#if timeit:
+		#start = perf_counter()
 
 		# =============================================
 		#	Test if there is a validation set to
@@ -119,9 +123,9 @@ class inception(loadData, plots, analysis):
 		# =============================================
 		#	Compute the training time (minutes)
 		# =============================================
-		if timeit:
-			time2run = perf_counter() - start
-			print("It took {:.1f} minutes to run".format(time2run/60.))
+		#if timeit:
+		#time2run = perf_counter() - start
+		#print("It took {:.1f} minutes to run".format(time2run/60.))
 
 		# =============================================
 		#	If save, output the weights to "ofile"
@@ -159,14 +163,17 @@ if __name__ == '__main__':
 	cnn._loadTrain("../data/train/X_data.npy", "../data/train/label.npy")
 	cnn._loadValid("../data/valid/X_data.npy", "../data/valid/label.npy")
 	cnn._loadTest("../data/test/X_data.npy", "../data/test/label.npy")
+	#cnn._loadTrain("../Sim_Data/x_7_Normalized_10.npy", "../Sim_Data/y_7_10.npy")
+	#cnn._loadValid("../Sim_Data/x_7_Normalized_5.npy", "../Sim_Data/y_7_5.npy")
+	#cnn._loadTest("../Sim_Data/x_7_Normalized_7.npy", "../Sim_Data/y_7_7.npy")
 
-	cnn._inception(convl=[3,5], pool=[3])
+	cnn._inception(convl=[3,5,17], pool=[5])
 	cnn._convl1D()
 	cnn._flatten()
 	cnn._dense(512, 'relu', 0.5, 1)
 	cnn._compile(2, 'softmax', 'adadelta', 'binary_crossentropy', ['binary_accuracy'])
 	#cnn._plotModel(to_file='graph.png')
 
-	cnn._train(10, 5, save=False)
+	cnn._train(10, 5, save=True, ofile='inception_weights')
 	cnn._test(prob=0.8)
 	print(confusion_matrix(cnn.testLabel_, cnn.testPred_))

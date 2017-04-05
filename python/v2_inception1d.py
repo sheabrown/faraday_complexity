@@ -21,9 +21,9 @@ import graphviz
 # input spectrum dimensions
 spec_length = 200
 input_shape = (spec_length, 2)
-batch_size = 10
+batch_size = 20
 nb_classes = 2
-nb_epoch = 5
+nb_epoch = 1
 
 
 #plot the model
@@ -31,25 +31,29 @@ nb_epoch = 5
 def read_data():
 	# Load some test data
 	X_train=np.load('../Sim_data/x_7_Normalized_7.npy')
+	#X_train=np.load('../data/train/X_data.npy')
 	'''q = np.load('../data/train/X_data.npy')
 	u = np.load('../data/train/X_data.npy')
 	X_train = np.array([q,u])'''
 	y_train=np.load('../Sim_data/y_7_7.npy')
+	#y_train=np.load('../data/train/label.npy')
 
 	X_test=np.load('../Sim_data/x_7_Normalized_5.npy')
+	#X_test=np.load('../data/test/X_data.npy')
 	'''q = np.load('../data/test/X_data.npy')
 	u = np.load('../data/test/X_data.npy')
 	X_test = np.array([q,u])'''
 	y_test=np.load('../Sim_data/y_7_5.npy')
+	#y_test=np.load('../data/test/label.npy')
 	
+	#shuffle the data randomly
+	#X_train, y_train = shuffle(X_train, y_train, random_state=0)
+	#X_test, y_test = shuffle(X_test, y_test,random_state=0)
+
 	Y_train = np_utils.to_categorical(y_train, nb_classes)
 	Y_test = np_utils.to_categorical(y_test, nb_classes)
 
-	#shuffle the data randomly
-	X_train, y_train = shuffle(X_train, y_train, random_state=0)
-	X_test, y_test = shuffle(X_test, y_test,random_state=0)
-
-	print (X_train)
+	#print (X_train)
 	#global input_shape
 	#input_shape = X_train.shape
 	return X_train, y_train, X_test, y_test
@@ -59,21 +63,21 @@ def incept():
 	input = Input(input_shape)
 
 	nb_filter = 32
-	conv1x1 = Convolution1D(nb_filter=nb_filter, filter_length=1, subsample_length=1)(input)
+	conv1x1 = Convolution1D(nb_filter=nb_filter, filter_length=1, subsample_length=1,init='zeros')(input)
 
-	inception_1a1x1 = Convolution1D(nb_filter=nb_filter, filter_length=1, subsample_length=1, activation='relu')(conv1x1)
+	inception_1a1x1 = Convolution1D(nb_filter=nb_filter, filter_length=1, subsample_length=1, activation='relu',init='zeros')(conv1x1)
 
 	#23x23 convolution layer
 	inception_1a23x23_reduce = Convolution1D(nb_filter=32, filter_length=1)(conv1x1)
-	inception_1a23x23 = Convolution1D(nb_filter=nb_filter, filter_length=3, subsample_length=1,border_mode='same', activation='relu')(inception_1a23x23_reduce)
+	inception_1a23x23 = Convolution1D(nb_filter=nb_filter, filter_length=3, subsample_length=1,border_mode='same', activation='relu',init='zeros')(inception_1a23x23_reduce)
 
 	#46x46 convolution layer
 	inception_1a46x46_reduce = Convolution1D(nb_filter=32, filter_length=1)(conv1x1)
-	inception_1a46x46 = Convolution1D(nb_filter=nb_filter, filter_length=5, subsample_length=1,border_mode='same', activation='relu')(inception_1a46x46_reduce)
+	inception_1a46x46 = Convolution1D(nb_filter=nb_filter, filter_length=5, subsample_length=1,border_mode='same', activation='relu',init='zeros')(inception_1a46x46_reduce)
 
 	#pooling layer
 	inception_1a_pool = MaxPooling1D(pool_length=3, stride=1, border_mode='same')(conv1x1)
-	inception_1a_pool1x1 = Convolution1D(nb_filter=nb_filter, filter_length=1, border_mode='same', activation='relu')(inception_1a_pool)
+	inception_1a_pool1x1 = Convolution1D(nb_filter=nb_filter, filter_length=1, border_mode='same', activation='relu',init='zeros')(inception_1a_pool)
 
 	merge1 = klayers.concatenate([inception_1a1x1, inception_1a23x23, inception_1a46x46, inception_1a_pool1x1])
 
@@ -97,14 +101,14 @@ def incept():
 	merge2 = klayers.concatenate([inception_2a1x1, inception_2a23x23, inception_2a46x46, inception_2a_pool1x1])'''
 
 
-	conv1x1 = Convolution1D(nb_filter=nb_filter, filter_length=1, subsample_length=1)(merge1)
-	d = Dense(256, activation='tanh',name='1')(conv1x1)
-	d = Dense(256, activation='tanh',name='2')(d)
-	d = Dropout(0.5)(d)
+	conv1x1 = Convolution1D(nb_filter=nb_filter, filter_length=1, subsample_length=1,init='zeros')(input)
+	d = Dense(256, activation='relu',name='1',init='glorot_uniform')(conv1x1)
+	d = Dense(256, activation='relu',name='2',init='glorot_uniform')(d)
+	#d = Dropout(0.5)(d)
 	d = Flatten()(d)
-	d = Dense(128, activation='tanh',name='3')(d)
+	d = Dense(512, activation='relu',name='3',init='glorot_uniform')(d)
 
-	out = Dense(1, activation='softmax', name='main_out')(d)
+	out = Dense(1, activation='softmax', name='main_out', init='zeros')(d)
 
 	inception_model = Model(input=input, output=out)
 	return inception_model
@@ -113,9 +117,10 @@ def incept():
 if __name__ == '__main__':
 
 	X_train, Y_train, X_test, Y_test = read_data()
+	sgd = optimizers.SGD(lr=0.01, decay=1e-6, momentum=0.9, nesterov=True)
 
 	model = incept()
-	model.compile(optimizer='adadelta',
+	model.compile(optimizer=sgd,
               loss='binary_crossentropy',
               metrics=['binary_accuracy'])
 	model.fit(X_train, Y_train, batch_size=batch_size, nb_epoch=nb_epoch,verbose=1)#, validation_data=(X_test, Y_test))
@@ -142,5 +147,26 @@ if __name__ == '__main__':
 	print(ff,tf)
 	print(ft,tt)
 
+fig,ax = plt.subplots(3,3, figsize=(10,10))
+ax[0,0].plot(X_test[correct_indices[0]])
+ax[0,1].plot(X_test[correct_indices[1]])
+ax[0,2].plot(X_test[correct_indices[2]])
+ax[1,0].plot(X_test[correct_indices[3]])
+ax[1,1].plot(X_test[correct_indices[4]])
+ax[1,2].plot(X_test[correct_indices[5]])
+ax[2,0].plot(X_test[incorrect_indices[0]])
+ax[2,1].plot(X_test[incorrect_indices[1]])
+ax[2,2].plot(X_test[incorrect_indices[2]])
+print (correct_indices)
+ax[0,0].set_title('Incorrect. Gave: %i, Expected %i'%(predicted_classes[correct_indices[0]], Y_test[correct_indices[0]]))
+ax[0,1].set_title('Incorrect. Gave: %i, Expected %i'%(predicted_classes[correct_indices[1]], Y_test[correct_indices[1]]))
+ax[0,2].set_title('Incorrect. Gave: %i, Expected %i'%(predicted_classes[correct_indices[2]], Y_test[correct_indices[2]]))
+ax[1,0].set_title('Incorrect. Gave: %i, Expected %i'%(predicted_classes[correct_indices[3]], Y_test[correct_indices[3]]))
+ax[1,1].set_title('Incorrect. Gave: %i, Expected %i'%(predicted_classes[correct_indices[4]], Y_test[correct_indices[4]]))
+ax[1,2].set_title('Incorrect. Gave: %i, Expected %i'%(predicted_classes[correct_indices[5]], Y_test[correct_indices[5]]))
+ax[2,0].set_title('Incorrect. Gave: %i, Expected %i'%(predicted_classes[incorrect_indices[0]], Y_test[incorrect_indices[0]]))
+ax[2,1].set_title('Incorrect. Gave: %i, Expected %i'%(predicted_classes[incorrect_indices[1]], Y_test[incorrect_indices[1]]))
+ax[2,2].set_title('Incorrect. Gave: %i, Expected %i'%(predicted_classes[incorrect_indices[2]], Y_test[incorrect_indices[2]]))
 
+plt.savefig('v2inception1d_test_res2.png',bbinches='tight')
 
