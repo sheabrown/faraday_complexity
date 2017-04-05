@@ -35,7 +35,7 @@ class inception(loadData, plots, analysis):
 		#	Add the final dense layer subject
 		#	to an l2 regularization penalty 
 		# ==================================================
-		self.model_.append(Dense(classes, W_regularizer=l2(self.__l2reg))(self.model_[-1]))
+		self.model_.append(Dense(classes, kernel_regularizer=l2(self.__l2reg))(self.model_[-1]))
 
 		# ==================================================
 		#	Pass the output through the final
@@ -60,13 +60,13 @@ class inception(loadData, plots, analysis):
 		"""
 		pass
 
-	def _convl1D(self, filters=1, kernel_size=1, input_shape=(16,16,64), padding='same'):
+	def _convl1D(self, filters=1, kernel_size=1, padding='same'):
 		"""
 		Function for applying a 1D convolution to
 		the previous output.
 
 		To call:
-			_convl1D(filters, kernel_size, input_shape, padding)
+			_convl1D(filters, kernel_size, padding)
 
 		Parameters:
 
@@ -80,13 +80,13 @@ class inception(loadData, plots, analysis):
 		# ==================================================
 		try:
 			self.model_
-			self.model_.append(Conv1D(filters=filters, kernel_size=kernel_size, input_shape=input_shape, padding=padding, W_regularizer=l2(self.__l2reg))(self.model_[-1]))
+			self.model_.append(Conv1D(filters=filters, kernel_size=kernel_size, padding=padding, kernel_regularizer=l2(self.__l2reg))(self.model_[-1]))
 		except:
 			self.model_ = []
 			self.__inputShape = self.trainX_.shape[1:]
 			self.__input = Input(shape=self.__inputShape)
 			
-			self.model_.append(Conv1D(filters=filters, kernel_size=kernel_size, input_shape=input_shape, padding=padding, W_regularizer=l2(self.__l2reg))(self.__input))
+			self.model_.append(Conv1D(filters=filters, kernel_size=kernel_size, padding=padding, kernel_regularizer=l2(self.__l2reg))(self.__input))
 
 
 	def _dense(self, z, act='relu', drop=0.5, ntimes=1):
@@ -110,7 +110,7 @@ class inception(loadData, plots, analysis):
 			# ==================================================
 			#	Append the dense layer to the model
 			# ==================================================
-			self.model_.append(Dense(z, W_regularizer=l2(self.__l2reg))(self.model_[-1]))
+			self.model_.append(Dense(z, kernel_regularizer=l2(self.__l2reg))(self.model_[-1]))
 
 			# ==================================================
 			#	Add an activation layer (if specified)
@@ -156,7 +156,7 @@ class inception(loadData, plots, analysis):
 			#	an input to the next layers and
 			#	concatenated to the final output
 			# ===========================================
-			convl_1x1 = Conv1D(32, kernel_size=1, W_regularizer=l2(self.__l2reg))(self.model_[-1])
+			convl_1x1 = Conv1D(32, kernel_size=1, kernel_regularizer=l2(self.__l2reg))(self.model_[-1])
 			model.append(convl_1x1)
 
 			# ===========================================
@@ -164,7 +164,7 @@ class inception(loadData, plots, analysis):
 			#	each value of "c" in "convl"
 			# ===========================================
 			for c in convl:
-				convl_cx1 = Conv1D(64, kernel_size=c, strides=1, padding=padding, activation=act, W_regularizer=l2(self.__l2reg))(convl_1x1)
+				convl_cx1 = Conv1D(64, kernel_size=c, strides=1, padding=padding, activation=act, kernel_regularizer=l2(self.__l2reg))(convl_1x1)
 				model.append(convl_cx1)
 
 			# ===========================================
@@ -173,7 +173,7 @@ class inception(loadData, plots, analysis):
 			# ===========================================
 			for p in pool:
 				pool_px1   = MaxPooling1D(pool_size=p, strides=pool_stride, padding=padding)(self.model_[-1])
-				pconvl_1x1 = Conv1D(64, kernel_size=1, padding=padding, activation=act, W_regularizer=l2(self.__l2reg))(pool_px1)
+				pconvl_1x1 = Conv1D(64, kernel_size=1, padding=padding, activation=act, kernel_regularizer=l2(self.__l2reg))(pool_px1)
 				model.append(pconvl_1x1)
 
 
@@ -192,7 +192,7 @@ class inception(loadData, plots, analysis):
 			#	an input to the next layers and
 			#	concatenated to the final output
 			# ===========================================			
-			convl_1x1 = Conv1D(32, kernel_size=1, input_shape=self.__inputShape, W_regularizer=l2(self.__l2reg))(self.__input)
+			convl_1x1 = Conv1D(32, kernel_size=1, input_shape=self.__inputShape, kernel_regularizer=l2(self.__l2reg))(self.__input)
 			model.append(convl_1x1)
 
 
@@ -201,7 +201,7 @@ class inception(loadData, plots, analysis):
 			#	each value of "c" in "convl"
 			# ===========================================
 			for c in convl:
-				convl_cx1 = Conv1D(64, kernel_size=c, strides=1, padding=padding, activation=act, W_regularizer=l2(self.__l2reg))(convl_1x1)
+				convl_cx1 = Conv1D(64, kernel_size=c, strides=1, padding=padding, activation=act, kernel_regularizer=l2(self.__l2reg))(convl_1x1)
 				model.append(convl_cx1)
 
 			# ===========================================
@@ -210,7 +210,7 @@ class inception(loadData, plots, analysis):
 			# ===========================================
 			for p in pool:
 				pool_px1   = MaxPooling1D(input_shape=self.__inputShape, pool_size=p, strides=pool_stride, padding=padding)(self.__input)
-				pconvl_1x1 = Conv1D(64, kernel_size=1, padding=padding, activation=act, W_regularizer=l2(self.__l2reg))(pool_px1)
+				pconvl_1x1 = Conv1D(64, kernel_size=1, padding=padding, activation=act, kernel_regularizer=l2(self.__l2reg))(pool_px1)
 				model.append(pconvl_1x1)
 
 		# ===========================================
@@ -288,6 +288,6 @@ if __name__ == '__main__':
 	cnn._compile()
 	#cnn._plotModel(to_file='graph.png')
 
-	cnn._train(10, 5, save=False)
-	cnn._test(prob=0.8)
+	cnn._train(5, 5, save=False)
+	cnn._test(prob=0.7)
 	print(confusion_matrix(cnn.testLabel_, cnn.testPred_))
