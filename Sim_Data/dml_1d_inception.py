@@ -2,7 +2,7 @@ from __future__ import print_function
 import numpy as np
 import matplotlib.pyplot as plt
 import time
-plt.rcParams['figure.figsize'] = (7,7) # Make the figures a bit bigger
+#plt.rcParams['figure.figsize'] = (7,7) # Make the figures a bit bigger
 np.random.seed(1337)  # for reproducibility
 
 #from keras.datasets import mnist
@@ -14,6 +14,52 @@ from keras import backend as K
 from keras.optimizers import SGD
 from sklearn.utils import shuffle
 from dml_create_spectrum import dmlCreateSpectrum
+#-------------------
+#What Epochs to run
+#-------------------
+epoch_array     = [1]
+#-------------------
+#What Size Training Set
+#-------------------
+training_array  = [6]
+#-------------------
+#What Size Testing Set
+#-------------------
+testing_array   = [5]
+#-------------------
+#What Version/File naming convention
+#-------------------
+version="04_06"
+#-------------------
+#Test Set Faraday Depth Range
+#-------------------
+rangeFd=[-69,69]    
+#-------------------
+#Test Set Sigma Range
+#------------------- 
+rangeSig=[0.01,1]   
+#-------------------
+#Test Set Chinot Range
+#------------------- 
+rangeChi=[0,np.pi]  
+#-------------------
+#Test Set Flux range
+#------------------- 
+rangeFlux=[0.01,1]   
+#-------------------
+#Create Spectrum format
+#-------------------
+#param_value-------- pulled from testing and training arrays
+#version------------ file header formatting 
+#rangeFd------------ Faraday Depth Range
+#rangeSig----------- Sigma Range
+#rangeChi----------- Chinot range
+#rangeFlux---------- Flux Range
+#------------------- 
+'''
+dmlCreateSpectrum(param_value=nb_testing,version=version,rangeFd=rangeFd,rangeSig=rangeSig,rangeChi=rangeChi, rangeFlux=rangeFlux)
+'''	
+
 
 #from load_images import loadTrainingSet, loadValidationSet, loadTestSet, rgbImage
 
@@ -97,7 +143,7 @@ def model(nb_classes=2):
 	final_model.add(Activation('softmax'))
 	return final_model	
 		
-def main(version="8",nb_training=4,nb_testing=4,nb_epoch=5,batch_size=5,nb_classes=2,counter=0):	
+def main(version="8",nb_training=4,nb_testing=4,nb_epoch=5,batch_size=5,nb_classes=2,counter=0,rangeFd=[-69,69],rangeSig=[0.01,1],rangeChi=[0,np.pi], rangeFlux=[0.01,1]):	
 	# Load some test data
 	training_file_name='x_'+version+'_Normalized_'+str(nb_training)
 	testing_file_name='x_'+version+'_Normalized_'+str(nb_testing)
@@ -113,7 +159,7 @@ def main(version="8",nb_training=4,nb_testing=4,nb_epoch=5,batch_size=5,nb_class
 		y_test=np.load('y_'+version+'_'+str(nb_testing)+'.npy')
 		X_test=np.load(testing_file_name+'.npy')
 	except:
-		dmlCreateSpectrum(param_value=nb_testing,version=version,rangeFd=[-69,69],rangeSig=[0.01,1],rangeChi=[0,np.pi], rangeFlux=[0.01,1])
+		dmlCreateSpectrum(param_value=nb_testing,version=version,rangeFd=rangeFd,rangeSig=rangeSig,rangeChi=rangeChi, rangeFlux=rangeFlux)
 		
 	try:
 		y_test=np.load('y_'+version+'_'+str(nb_testing)+'.npy')
@@ -167,7 +213,7 @@ def main(version="8",nb_training=4,nb_testing=4,nb_epoch=5,batch_size=5,nb_class
 	try:
 		probability_array[counter]=[prob,ff,ft,tf,tt]
 	except:
-		print("Hello")
+		print(prob,ff,ft,tf,tt)
 		
 	plt.ion()
 	fig,ax = plt.subplots(2,2, figsize=(12,12))
@@ -182,18 +228,13 @@ def main(version="8",nb_training=4,nb_testing=4,nb_epoch=5,batch_size=5,nb_class
 	
 	plt.savefig(version+'.png',bbinches='tight')
 		
-epoch_array     = [1]
-training_array  = [6]
-testing_array   = [5]
 
+	
+#-------------------
+#For Loop Training
+#-------------------		
 counts=len(epoch_array)*len(testing_array)*len(training_array)
 counter=0
-version="04_06"
-
-#if(True):
-#	dmlCreateSpectrum(testing_array,version=version)
-#	dmlCreateSpectrum(training_array,version=version)
-
 probability_array=np.zeros([counts,5])
 for number in epoch_array:
 	for testing in testing_array:
@@ -203,7 +244,7 @@ for number in epoch_array:
 				print("Epochs",number,"Testing Set",testing,"Training Set",training)
 				print(time.asctime(time.localtime()))
 				start_time = time.time()	
-				main(counter=counter,version=version,nb_training=training,nb_testing=testing,nb_epoch=number)
+				main(counter=counter,version=version,nb_training=training,nb_testing=testing,nb_epoch=number,rangeFd=rangeFd,rangeSig=rangeSig,rangeChi=rangeChi, rangeFlux=rangeFlux)
 				print(time.time() - start_time)
 				timing    = (time.time() - start_time)
 				seconds = round(timing % 60)
