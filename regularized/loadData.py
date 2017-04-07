@@ -71,3 +71,4 @@ class loadData:
 		Postcondition:
 		"""
 		self.validX_, self.validY_, self.validLabel_, self.validChi_, self.validDepth_, self.validFlux_, self.validSig = self.__load(dir)
+

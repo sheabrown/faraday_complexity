@@ -72,11 +72,6 @@ class inception(loadData, plots, analysis):
 		self.model_.compile(loss=loss, optimizer=optimizer, metrics=metrics)
 
 
-	def _loadWeights(self, fn):
-		"""
-		Function for loading the weights associated with the module
-		"""
-		pass
 
 	def _convl(self, filters=1, kernel_size=1, padding='same'):
 		"""
@@ -259,7 +254,7 @@ class inception(loadData, plots, analysis):
 		self.model_.append(concatenate(model))
 
 
-	def _train(self, epochs, batch_size, timeit=True, save=False, ofile="weights", verbose=1):
+	def _train(self, epochs, batch_size, timeit=True, save=False, weights="weights.h5", verbose=1):
 
 		if timeit:
 			start = perf_counter()
@@ -286,7 +281,7 @@ class inception(loadData, plots, analysis):
 		#	If save, output the weights to "ofile"
 		# =============================================
 		if save:
-			self.model_.save_weights(ofile)
+			self.model_.save_weights(weights)
 
 
 	def _test(self, prob=0.5):
@@ -334,11 +329,14 @@ if __name__ == '__main__':
 
 	# Implement Batch normalization
 	
-	cnn = inception(0.0005)
-	cnn._loadTrain("../data/train/")
-	cnn._loadValid("../data/valid/")
-	cnn._loadTest("../data/test/")
 
+	cnn = inception(0.0005)
+	cnn._loadTrain("data/train/V1/")
+	cnn._loadValid("data/valid/V1/")
+	cnn._loadTest("data/test/V1/")
+
+
+	"""
 	cnn._convl(kernel_size=3)
 	cnn._pool()
 	cnn._inception(convl=[3,17], pool=[3])
@@ -352,24 +350,5 @@ if __name__ == '__main__':
 	cnn._test(prob=0.7)
 	print(confusion_matrix(cnn.testLabel_, cnn.testPred_))
 
-
-
 	"""
-	cnn = inception(0.0005)
-	cnn._loadTrain("../data/train/")
-	cnn._loadValid("../data/valid/")
-	cnn._loadTest("../data/test/")
 
-	cnn._convl(kernel_size=3)
-	cnn._pool()
-	cnn._inception(convl=[3,17], pool=[3])
-	cnn._convl()
-	cnn._flatten()
-	cnn._dense(512, 'relu', 0.5, 1)
-	cnn._compile()
-	cnn._plotCNN(to_file='graph.png')
-
-	cnn._train(15, 5, save=True)
-	cnn._test(prob=0.7)
-	print(confusion_matrix(cnn.testLabel_, cnn.testPred_))
-	"""

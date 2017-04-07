@@ -9,12 +9,6 @@ class plots:
 	# ===================================================
 	#	Dictionary for x-axis label
 	# ===================================================
-	self.plotLabel_ = {
-		"flux": r'$F_{2}$',
-		"depth": r'$\Delta \phi$',
-		"chi": r'$\Delta \chi$',
-		"sig": r'$\sigma_\mathrm{noise}$'
-	}
 
 	"""
 	Classing for making plots for the inception model.
@@ -25,7 +19,6 @@ class plots:
 		_plotParamProb
 		_plotROC
 	"""
-
 
 	def _plotCNN(self, to_file='graph.png'):
 		plot_model(self.model_, to_file=to_file)
