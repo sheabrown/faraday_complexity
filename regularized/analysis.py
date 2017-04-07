@@ -7,19 +7,22 @@ class analysis:
 	def __init__(self):
 		pass
 
-	def _getComplexParams(self):
+	def _getComplexParams(self, abs=False):
 		"""
 		Function for extracting the data associated with
 		the second component of the complex source.
 
 		To call:
-			_getComplexParams()
+			_getComplexParams(abs)
 
 		Parameters:
-			None
+			abs	Take the absolute value of the difference
 
 		Postcondition:
-			The flux
+			The flux of the second component, the difference
+			in phases and depth between the two components,
+			and the noise value are stored in the data
+			frame "self.dfComplex_"
 
 			The model's predicted probability that
 			the source is complex is also stored.
@@ -46,17 +49,15 @@ class analysis:
 		# 	Compute the difference in phases
 		# ===================================================
 		chi = self.testChi_[loc]
-		chi1 = np.asarray([c[0] for c in chi])
-		chi2 = np.asarray([c[1] for c in chi])
-		chi = np.abs(chi1 - chi2)
+		chi = np.asarray([c[1] - c[0] for c in chi])
+		if abs: chi = np.abs(chi)
 
 		# ===================================================
 		# 	Compute the difference in Faraday depths
 		# ===================================================
 		depth = self.testDepth_[loc]
-		d1 = np.asarray([d[0] for d in depth])
-		d2 = np.asarray([d[1] for d in depth])
-		depth = np.abs(d1 - d2)
+		depth = np.asarray([d[1] - d[0] for d in depth])
+		if abs: depth = np.abs(depth)
 
 		# ===================================================
 		#	Retrieve the noise parameter
