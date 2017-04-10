@@ -62,7 +62,7 @@ class analysis:
 		# ===================================================
 		#	Retrieve the noise parameter
 		# ===================================================
-		sig = self.testSig[loc]
+		sig = self.testSig_[loc]
 
 		# ===================================================
 		#	Convert to pandas series
