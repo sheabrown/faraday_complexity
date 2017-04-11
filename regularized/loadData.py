@@ -38,7 +38,7 @@ class loadData:
 		Parameters:
 			dir	data directory
 		"""
-		self.trainX_, self.trainY_, self.trainLabel_, self.trainChi_, self.trainDepth_, self.trainFlux_, self.trainSig = self.__load(dir)
+		self.trainX_, self.trainY_, self.trainLabel_, self.trainChi_, self.trainDepth_, self.trainFlux_, self.trainSig_ = self.__load(dir)
 
 
 	def _loadTest(self, dir):
@@ -53,7 +53,7 @@ class loadData:
 		Parameters:
 			dir	data directory
 		"""
-		self.testX_, self.testY_, self.testLabel_, self.testChi_, self.testDepth_, self.testFlux_, self.testSig = self.__load(dir)
+		self.testX_, self.testY_, self.testLabel_, self.testChi_, self.testDepth_, self.testFlux_, self.testSig_ = self.__load(dir)
 
 
 	def _loadValid(self, dir):
@@ -70,5 +70,5 @@ class loadData:
 
 		Postcondition:
 		"""
-		self.validX_, self.validY_, self.validLabel_, self.validChi_, self.validDepth_, self.validFlux_, self.validSig = self.__load(dir)
+		self.validX_, self.validY_, self.validLabel_, self.validChi_, self.validDepth_, self.validFlux_, self.validSig_ = self.__load(dir)
 
