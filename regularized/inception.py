@@ -1,8 +1,8 @@
-from keras.models import Model
-from keras.layers import Activation, Dense, Dropout, Flatten, Input
+from keras.models import Model, load_model
+from keras.layers import Activation, Conv1D, Dense, Dropout, Flatten, Input
 from keras.layers import concatenate
-from keras.layers import Conv1D
 from keras.layers.pooling import MaxPooling1D, AveragePooling1D
+from keras.callbacks import EarlyStopping
 from keras.optimizers import SGD
 from keras.regularizers import l2
 from time import perf_counter
@@ -254,7 +254,26 @@ class inception(loadData, plots, analysis):
 		self.model_.append(concatenate(model))
 
 
-	def _train(self, epochs, batch_size, timeit=True, save=False, weights="weights.h5", verbose=1):
+	def _train(self, epochs, batch_size, timeit=True, weights=None, Model=None, verbose=1,
+			monitor='val_loss', min_delta=0, patience=5):
+		"""
+		Function for fitting a model on the training dataset.
+
+		To call:
+			_train(epochs, batch_size, ...)
+
+		Parameters:
+			epochs		number of epochs to run
+			batch_size
+			timeit		(boolean) count training time
+			weights		filename to save weights to (.h5)
+			model		filename to save model to (.h5)
+			--------------------------------------------------
+		[EarlyStopping]
+			monitor
+			min_delta
+			patience
+		"""
 
 		if timeit:
 			start = perf_counter()
@@ -264,11 +283,15 @@ class inception(loadData, plots, analysis):
 		#	test the accuracy. If not, use the
 		#	training set.
 		# =============================================
+		earlyStop = EarlyStopping(monitor=monitor, min_delta=min_delta, patience=patience, verbose=0, mode='auto')
+
 		try:
 			self.validX_
-			self.model_.fit(self.trainX_, self.trainY_, batch_size=batch_size, epochs=epochs, verbose=verbose, validation_data=(self.validX_, self.validY_))
+			self.model_.fit(self.trainX_, self.trainY_, batch_size=batch_size, epochs=epochs, verbose=verbose, 
+					validation_data=(self.validX_, self.validY_), callbacks=[earlyStop])
 		except:
-			self.model_.fit(self.trainX_, self.trainY_, batch_size=batch_size, epochs=epochs, verbose=verbose, validation_data=(self.trainX_, self.trainY_))
+			self.model_.fit(self.trainX_, self.trainY_, batch_size=batch_size, epochs=epochs, verbose=verbose, 
+					validation_data=(self.trainX_, self.trainY_), callbacks=[earlyStop])
 
 		# =============================================
 		#	Compute the training time (minutes)
@@ -278,10 +301,17 @@ class inception(loadData, plots, analysis):
 			print("It took {:.1f} minutes to run".format(time2run/60.))
 
 		# =============================================
-		#	If save, output the weights to "ofile"
+		#	Save the weights (if applicable)
 		# =============================================
-		if save:
+		if weights:
 			self.model_.save_weights(weights)
+
+		# =============================================
+		#	Save the model (if applicable)
+		# =============================================
+		if model:
+			self.model_.save(model)
+
 
 
 	def _test(self, prob=0.5):
@@ -324,31 +354,32 @@ class inception(loadData, plots, analysis):
 		"""
 		return self.model_.predict(data)[:,1]
 
+	def _loadModel(self, model):
+		"""
+		Function for loading a model stored in a file.
+
+		To call:
+			_loadModel(model)
+
+		Parameters:	
+			model		filename of model
+		"""
+		self.model_ = load_model(model)
+
 if __name__ == '__main__':
-	#sgd = SGD(lr=0.1)
-
-	# Implement Batch normalization
-	
-
-	cnn = inception(0.0005)
+	cnn = inception()
 	cnn._loadTrain("data/train/V1/")
 	cnn._loadValid("data/valid/V1/")
 	cnn._loadTest("data/test/V1/")
 
 
-	"""
-	cnn._convl(kernel_size=3)
-	cnn._pool()
-	cnn._inception(convl=[3,17], pool=[3])
+	cnn._inception(convl=[3,5,11], pool=[3])
+	cnn._inception(convl=[3,5,23], pool=[3, 11])
 	cnn._convl()
 	cnn._flatten()
-	cnn._dense(512, 'relu', 0.5, 1)
-	cnn._compile(weights="weights")
-	#cnn._plotCNN(to_file='graph.png')
+	cnn._dense(256, 'elu', 0.5, 1)
+	cnn._compile(weights='weights_V1.h5')
 
-	#cnn._train(25, 5, save=True)
-	cnn._test(prob=0.7)
+	cnn._train(15, 32)
+	cnn._test(prob=0.5)
 	print(confusion_matrix(cnn.testLabel_, cnn.testPred_))
-
-	"""
-
