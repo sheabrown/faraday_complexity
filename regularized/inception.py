@@ -254,7 +254,7 @@ class inception(loadData, plots, analysis):
 		self.model_.append(concatenate(model))
 
 
-	def _train(self, epochs, batch_size, timeit=True, weights=None, Model=None, verbose=1,
+	def _train(self, epochs, batch_size, timeit=True, weights=None, model=None, verbose=1,
 			monitor='val_loss', min_delta=0, patience=5):
 		"""
 		Function for fitting a model on the training dataset.
