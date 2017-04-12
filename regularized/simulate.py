@@ -17,12 +17,11 @@ class simulate:
 	def __randFlux(self, size, fluxMin=0.01, fluxMax=1):
 		return np.random.uniform(fluxMin, fluxMax, size)
 
-	def __randChi(self, size, chiMin=0, chiMax=2*np.pi):
+	def __randChi(self, size, chiMin=0, chiMax=np.pi):
 		return np.random.uniform(chiMin, chiMax, size)
 
 	def __randNoise(self, size, noiseMin=0.01, noiseMax=1.0):
 		return np.random.uniform(noiseMin, noiseMax, size)
-
 
 	def _generateParams(self, N, depthMin=-20, depthMax=20, 
 		fluxMin=0.01, fluxMax=1, chiMin=0, chiMax=2*np.pi,
@@ -81,9 +80,9 @@ class simulate:
 		loc = np.where(label == 1)[0]
 		size = len(loc)
 
-		depth[loc] = list(zip(depth[loc], self.__randDepth(size, depthMin=depthMin, depthMax=depthMax)))
-		flux[loc]  = list(zip(flux[loc],  self.__randFlux(size,  fluxMin=fluxMin,   fluxMax=fluxMax)))
-		chi[loc]   = list(zip(chi[loc],   self.__randChi(size,   noiseMin=noiseMin, noiseMax=noiseMax)))
+		depth[loc] = list(zip( depth[loc], depth[loc] + self.__randDepth(size, depthMin=depthMin, depthMax=depthMax) ))
+		flux[loc]  = list(zip( flux[loc],  flux[loc]  + self.__randFlux(size,  fluxMin=fluxMin,   fluxMax=fluxMax)   ))
+		chi[loc]   = list(zip( chi[loc],   chi[loc]   + self.__randChi(size,   chiMin=chiMin,     chiMax=chiMax) ))
 
 
 		# ===========================================
@@ -94,6 +93,87 @@ class simulate:
 		self.chi_   = chi
 		self.sig_   = sig
 		self.label_ = label
+
+
+	# ===========================================================
+	#	Beta distributed
+	# ===========================================================
+
+	def __randBetaChi(self, size, alpha=1, beta=1, chiMin=0, chiMax=2*np.pi):
+		return (chiMax - chiMin) * np.random.beta(alpha, beta, size) + chiMin
+
+	def __randBetaDepth(self, size, alpha=1, beta=1, depthMax=30):
+		sign = np.random.choice([-1,1], size, [0.5, 0.5])
+		return depthMax * sign * np.random.beta(alpha, beta, size)
+
+	def __randBetaFlux(self, size, alpha=1, beta=1, fluxMin=0.01, fluxMax=1):
+		return (fluxMax - fluxMin) * np.random.beta(alpha, beta, size) + fluxMin
+
+	def __randBetaNoise(self, size, alpha=1, beta=1, noiseMin=0.01, noiseMax=1.0):
+		return (noiseMax - noiseMin) * np.random.beta(alpha, beta, size) + noiseMin
+
+	def _generateBetaParams(self, N, pcomplex=0.35, seed=8595,
+		chiAlpha=1,   chiBeta=1,   chiMin=0, chiMax=np.pi,
+		depthAlpha=1, depthBeta=1, depthMin=-20, depthMax=20,
+		fluxAlpha=1,  fluxBeta=1,  fluxMin=0.01, fluxMax=1,
+		noiseAlpha=1, noiseBeta=1, noiseMin=0.01, noiseMax=1.0):
+		"""
+		Generates parameters for N faraday spectra,
+		with the probability of the source being
+		complex given by "pcomplex".
+
+		To call:
+			_generateBetaParams(N, ...)
+
+
+		Stored Variables:
+			chi_			phase offset (tuple if complex)
+			depth_			faraday depth (tuple if complex)
+			flux_			polarization flux (tuple if complex)
+			label_			complex (1) or simple (0)
+			sig_			noise
+		"""
+
+
+		# ===========================================
+		#	Set the random seed
+		# ===========================================
+		np.random.seed(seed)
+
+		# ===========================================
+		#	Generate parameters for the first comp.
+		# ===========================================
+		depth = self.__randDepth(N, depthMin=depthMin, depthMax=depthMax).astype('object')
+		flux  = np.ones(N).astype('object')
+		chi   = self.__randChi(N, chiMin=chiMin, chiMax=chiMax).astype('object')
+		sig   = self.__randBetaNoise(N, alpha=noiseAlpha, beta=noiseBeta, noiseMin=noiseMin, noiseMax=noiseMax)
+
+		# ===========================================
+		#	Array of labels (1 = complex, 0 = single)
+		# ===========================================
+		label = np.random.binomial(1, pcomplex, N)
+
+		# ===========================================
+		#	Generate random flux, depth, chi, and
+		#	sigma for the two component case
+		# ===========================================
+		loc = np.where(label == 1)[0]
+		size = len(loc)
+
+		depth[loc] = list(zip( depth[loc], depth[loc] + self.__randBetaDepth(size, alpha=depthAlpha, beta=depthBeta, depthMax=depthMax)))
+		flux[loc]  = list(zip( flux[loc],  self.__randBetaFlux(size, alpha=fluxAlpha, beta=fluxBeta, fluxMin=fluxMin, fluxMax=fluxMax)))
+		chi[loc]   = list(zip( chi[loc],   chi[loc] + self.__randBetaChi(size, alpha=chiAlpha, beta=chiBeta, chiMin=chiMin, chiMax = chiMax)))
+
+
+		# ===========================================
+		#	Store the results
+		# ===========================================
+		self.depth_ = depth
+		self.flux_  = flux
+		self.chi_   = chi
+		self.sig_   = sig
+		self.label_ = label
+
 
 
 	def _simulateNspec(self, N=5, pcomplex=0.35, width=100, seed=8008, save=False, dir='./', timeit=False):
