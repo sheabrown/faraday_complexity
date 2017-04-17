@@ -7,6 +7,7 @@ class analysis:
 	def __init__(self):
 		pass
 
+
 	def _getComplexParams(self, abs=False):
 		"""
 		Function for extracting the data associated with
@@ -77,6 +78,67 @@ class analysis:
 		#	Store the results in a dataframe
 		# ===================================================
 		self.dfComplex_ = pd.concat([chi, depth, flux, prob, sig], axis=1)
+
+
+	def _getSimpleParams(self):
+		"""
+		Function for extracting the data associated with
+		the simple sources.
+
+		To call:
+			_getSimpleParams()
+
+		Parameters:
+			None
+
+		Postcondition:
+
+		"""
+
+		# ===================================================
+		# 	Determine which sources are complex
+		# ===================================================
+		loc = np.where(self.testLabel_ == 0)[0]
+
+		# ===================================================
+		#	Retrieve the model's prediction that
+		#	the complex source is complex
+		# ===================================================
+		prob = self.testProb_[loc]
+
+		# ===================================================
+		# 	Extract the flux
+		# ===================================================
+		flux = self.testFlux_[loc]
+
+		# ===================================================
+		# 	Extract the phase
+		# ===================================================
+		chi = self.testChi_[loc]
+
+		# ===================================================
+		# 	Extract the Faraday depth
+		# ===================================================
+		depth = self.testDepth_[loc]
+
+		# ===================================================
+		#	Retrieve the noise parameter
+		# ===================================================
+		sig = self.testSig_[loc]
+
+		# ===================================================
+		#	Convert to pandas series
+		# ===================================================
+		chi   = pd.Series(chi, name='chi')
+		depth = pd.Series(depth, name='depth')
+		flux  = pd.Series(flux, name='flux')
+		prob  = pd.Series(prob, name='prob')
+		sig   = pd.Series(sig, name="sig")
+
+		# ===================================================
+		#	Store the results in a dataframe
+		# ===================================================
+		self.dfSimple_ = pd.concat([chi, depth, flux, prob, sig], axis=1)
 
 
 	def _getF1(self, step=0.025, save=False, suffix='', dir='./'):

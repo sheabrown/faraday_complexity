@@ -57,7 +57,7 @@ class inception(loadData, plots, analysis):
 		# ==================================================
 		#	Create the model instance
 		# ==================================================
-		self.model_ = Model(inputs=self.__input, outputs=[self.model_[-1]])
+		self.model_ = Model(inputs=self.model_[0], outputs=[self.model_[-1]])
 
 
 		# ==================================================
@@ -73,7 +73,7 @@ class inception(loadData, plots, analysis):
 
 
 
-	def _convl(self, filters=1, kernel_size=1, padding='same'):
+	def _convl(self, filters=1, kernel_size=1, strides=1, padding='same'):
 		"""
 		Function for applying a 1D convolution to
 		the previous output.
@@ -87,18 +87,19 @@ class inception(loadData, plots, analysis):
 
 		# ==================================================
 		#	Check to see if a model has already
-		#	been initialized. If so, append the 
-		#	convolution layer. If not, create the
-		#	model and add the convolution layer
+		#	been initialized. If not, create
+		#	and add the input layer.
 		# ==================================================
 		try:
 			self.model_
-			self.model_.append(Conv1D(filters=filters, kernel_size=kernel_size, padding=padding, kernel_regularizer=l2(self.__l2reg))(self.model_[-1]))
 		except:
 			self.model_ = []
-			self.__input = Input(shape=self.trainX_.shape[1:])
-			
-			self.model_.append(Conv1D(filters=filters, kernel_size=kernel_size, padding=padding, kernel_regularizer=l2(self.__l2reg))(self.__input))
+			self.model_.append(Input(shape=self.trainX_.shape[1:]))
+
+		# ==================================================
+		#	Apply the 1D convolution
+		# ==================================================
+		self.model_.append(Conv1D(filters=filters, kernel_size=kernel_size, strides=strides, padding=padding, kernel_regularizer=l2(self.__l2reg))(self.model_[-1]))
 
 
 	def _dense(self, z, act='relu', drop=0.5, ntimes=1):
@@ -134,119 +135,91 @@ class inception(loadData, plots, analysis):
 			# ==================================================
 			if drop != None: self.model_.append(Dropout(drop)(self.model_[-1]))
 
+
+
+
 	def _flatten(self):
 		self.model_.append(Flatten()(self.model_[-1]))
 
-	def _pool(self, p=3, type="max"):
+	def _pool(self, p=3, strides=1, padding='same', type="max"):
 		"""
-		Function for applying a pooling layer
+		Function for applying a pooling layer.
+
+		To call:
+			_pool(p, strides, padding, type)
+
+		Parameters:
+			p		pooling parameter
+			strides
+			padding
+			type		'max' or 'avg'
 		"""
-		pool_stride = 1
-		padding = 'same'
 
-
+		# ==================================================
+		#	Check to see if a model has already
+		#	been initialized. If not, create the
+		#	model and add the input
+		# ==================================================	
 		try:
 			self.model_
-			if type.lower() == 'avg':
-				self.model_.append(AveragePooling1D(pool_size=p, strides=pool_stride, padding=padding)(self.model_[-1]))
-
-			else:
-				self.model_.append(MaxPooling1D(pool_size=p, strides=pool_stride, padding=padding)(self.model_[-1]))
-
-
 		except:
 			self.model_ = []
-			self.__input = Input(shape=self.trainX_.shape[1:])
+			self.model_.append(Input(shape=self.trainX_.shape[1:]))
 
-			if type.lower() == 'avg':
-				self.model_.append(AveragePooling1D(pool_size=p, strides=pool_stride, padding=padding)(self.__input))
-			else:
-				self.model_.append(MaxPooling1D(pool_size=p, strides=pool_stride, padding=padding)(self.__input))
+		# ==================================================	
+		#	Apply the pooling, depending on which
+		#	type was chosen (max is default)
+		# ==================================================	
+		if type.lower() == 'avg':
+			self.model_.append(AveragePooling1D(pool_size=p, strides=strides, padding=padding)(self.model_[-1]))
 
-	def _inception(self, convl=[3, 5], pool=[3], act='relu'):
+		else:
+			self.model_.append(MaxPooling1D(pool_size=p, strides=strides, padding=padding)(self.model_[-1]))
+
+
+	def _inception(self, convl=[3, 5], pool=[3], act='relu', strides=2, padding='same'):
 
 		# ===========================================
 		#	List for holding the blocks
 		# ===========================================
 		model = []
-		padding = 'same'
-		pool_stride = 1
 
 		# ==================================================
 		#	Check to see if a model has already
-		#	been initialized. If so, append the 
-		#	inception layer. If not, create the
-		#	model and add the inception layer
+		#	been initialized. If not, create the
+		#	model and add the input
 		# ==================================================		
 		try:
-
-			# ===========================================
-			#	If this is not the first layer in the
-			#	network, proceed. Otherwise, run the
-			#	exception block
-			# ===========================================
 			self.model_
 
-			# ===========================================
-			#	Apply a 1D convolution. Used as
-			#	an input to the next layers and
-			#	concatenated to the final output
-			# ===========================================
-			convl_1x1 = Conv1D(32, kernel_size=1, kernel_regularizer=l2(self.__l2reg))(self.model_[-1])
-			model.append(convl_1x1)
-
-			# ===========================================
-			# 	Perform a 1xc convolution for
-			#	each value of "c" in "convl"
-			# ===========================================
-			for c in convl:
-				convl_cx1 = Conv1D(64, kernel_size=c, strides=1, padding=padding, activation=act, kernel_regularizer=l2(self.__l2reg))(convl_1x1)
-				model.append(convl_cx1)
-
-			# ===========================================
-			# 	Perform a max pooling of size "p"
-			#	each value of "p" in "pool"
-			# ===========================================
-			for p in pool:
-				pool_px1   = MaxPooling1D(pool_size=p, strides=pool_stride, padding=padding)(self.model_[-1])
-				pconvl_1x1 = Conv1D(64, kernel_size=1, padding=padding, activation=act, kernel_regularizer=l2(self.__l2reg))(pool_px1)
-				model.append(pconvl_1x1)
-
-
 		except:
-			# ===========================================
-			#	Create a parameter for holding
-			#	the model layers. Grab the input
-			#	shape
-			# ===========================================
 			self.model_ = []
-			self.__input = Input(shape=self.trainX_.shape[1:])
+			self.model_.append(Input(shape=self.trainX_.shape[1:]))
 
-			# ===========================================
-			#	Apply a 1D convolution. Used as
-			#	an input to the next layers and
-			#	concatenated to the final output
-			# ===========================================			
-			convl_1x1 = Conv1D(32, kernel_size=1, kernel_regularizer=l2(self.__l2reg))(self.__input)
-			model.append(convl_1x1)
+		# ===========================================
+		#	Apply a 1D convolution. Used as
+		#	an input to the next layers and
+		#	concatenated to the final output
+		# ===========================================
+		convl_1x1 = Conv1D(32, kernel_size=1, strides=strides, kernel_regularizer=l2(self.__l2reg))(self.model_[-1])
+		model.append(convl_1x1)
 
+		# ===========================================
+		# 	Perform a 1xc convolution for
+		#	each value of "c" in "convl"
+		# ===========================================
+		for c in convl:
+			convl_cx1 = Conv1D(64, kernel_size=c, strides=1, padding=padding, activation=act, kernel_regularizer=l2(self.__l2reg))(convl_1x1)
+			model.append(convl_cx1)
 
-			# ===========================================
-			# 	Perform a 1xc convolution for
-			#	each value of "c" in "convl"
-			# ===========================================
-			for c in convl:
-				convl_cx1 = Conv1D(64, kernel_size=c, strides=1, padding=padding, activation=act, kernel_regularizer=l2(self.__l2reg))(convl_1x1)
-				model.append(convl_cx1)
-
-			# ===========================================
-			# 	Perform a max pooling of size "p"
-			#	each value of "p" in "pool"
-			# ===========================================
-			for p in pool:
-				pool_px1   = MaxPooling1D(pool_size=p, strides=pool_stride, padding=padding)(self.__input)
-				pconvl_1x1 = Conv1D(64, kernel_size=1, padding=padding, activation=act, kernel_regularizer=l2(self.__l2reg))(pool_px1)
-				model.append(pconvl_1x1)
+		# ===========================================
+		# 	Perform a max pooling of size "p"
+		#	each value of "p" in "pool"
+		# ===========================================
+		for p in pool:
+			pool_px1   = MaxPooling1D(pool_size=p, strides=strides, padding=padding)(self.model_[-1])
+			pconvl_1x1 = Conv1D(64, kernel_size=1, padding=padding, activation=act, kernel_regularizer=l2(self.__l2reg))(pool_px1)
+			model.append(pconvl_1x1)
 
 		# ===========================================
 		#	Concatenate the outputs
@@ -354,6 +327,8 @@ class inception(loadData, plots, analysis):
 		"""
 		return self.model_.predict(data)[:,1]
 
+
+
 	def _loadModel(self, model):
 		"""
 		Function for loading a model stored in a file.
@@ -366,20 +341,59 @@ class inception(loadData, plots, analysis):
 		"""
 		self.model_ = load_model(model)
 
+	def _clear():
+		
+		self.model_ = []
+		self.model_.append(Input(shape=self.trainX_.shape[1:]))
+
+
 if __name__ == '__main__':
-	cnn = inception()
-	cnn._loadTrain("data/train/V1/")
-	cnn._loadValid("data/valid/V1/")
-	cnn._loadTest("data/test/V1/")
+	cnn = inception(0.0005)
+
+	cnn._loadTrain("data/train/V2/")
+	cnn._loadValid("data/valid/V2/")
+	cnn._loadTest("data/test/V2/")
 
 
-	cnn._inception(convl=[3,5,11], pool=[3])
-	cnn._inception(convl=[3,5,23], pool=[3, 11])
+	cnn._inception(convl=[3,5,23], pool=[3])
+	cnn._inception(convl=[3,5,23], pool=[3])
 	cnn._convl()
 	cnn._flatten()
 	cnn._dense(256, 'elu', 0.5, 1)
-	cnn._compile(weights='weights_V1.h5')
+	cnn._compile()
 
-	cnn._train(15, 32)
+	
+	# Train on the first batch
+	cnn._train(3, 32)
+	cnn._test(prob=0.5)
+
+
+
+
+
+
+
+
+
+
+
+	print(confusion_matrix(cnn.testLabel_, cnn.testPred_))
+
+
+
+
+
+
+	"""
+
+
+
+	cnn._loadTrain("data/train/V1/")
+	cnn._loadValid("data/valid/V1/")
+	cnn._loadTest("data/test/V3/")
+
+	cnn._train(5, 32)
 	cnn._test(prob=0.5)
 	print(confusion_matrix(cnn.testLabel_, cnn.testPred_))
+
+	"""

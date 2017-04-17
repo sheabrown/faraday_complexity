@@ -11,7 +11,7 @@ class simulate:
 	def __init__(self):
 		pass
 
-	def __randDepth(self, size, depthMin=-20, depthMax=20):
+	def __randDepth(self, size, depthMin=-40, depthMax=40):
 		return np.random.uniform(depthMin, depthMax, size)
 
 	def __randFlux(self, size, fluxMin=0.01, fluxMax=1):
@@ -23,8 +23,8 @@ class simulate:
 	def __randNoise(self, size, noiseMin=0.01, noiseMax=1.0):
 		return np.random.uniform(noiseMin, noiseMax, size)
 
-	def _generateParams(self, N, depthMin=-20, depthMax=20, 
-		fluxMin=0.01, fluxMax=1, chiMin=0, chiMax=2*np.pi,
+	def _generateParams(self, N, depthMin=-50, depthMax=50, 
+		fluxMin=0.01, fluxMax=1, chiMin=0, chiMax=np.pi,
 		noiseMin=0.01, noiseMax=1.0, pcomplex=0.35, seed=8595):
 		"""
 		Generates parameters for N faraday spectra,
@@ -80,9 +80,9 @@ class simulate:
 		loc = np.where(label == 1)[0]
 		size = len(loc)
 
-		depth[loc] = list(zip( depth[loc], depth[loc] + self.__randDepth(size, depthMin=depthMin, depthMax=depthMax) ))
-		flux[loc]  = list(zip( flux[loc],  flux[loc]  + self.__randFlux(size,  fluxMin=fluxMin,   fluxMax=fluxMax)   ))
-		chi[loc]   = list(zip( chi[loc],   chi[loc]   + self.__randChi(size,   chiMin=chiMin,     chiMax=chiMax) ))
+		depth[loc] = list(zip( depth[loc], self.__randDepth(size, depthMin=depthMin, depthMax=depthMax) ))
+		flux[loc]  = list(zip( flux[loc],  self.__randFlux(size,  fluxMin=fluxMin,   fluxMax=fluxMax)   ))
+		chi[loc]   = list(zip( chi[loc],   self.__randChi(size,   chiMin=chiMin,     chiMax = chiMax) ))
 
 
 		# ===========================================
@@ -114,7 +114,7 @@ class simulate:
 
 	def _generateBetaParams(self, N, pcomplex=0.35, seed=8595,
 		chiAlpha=1,   chiBeta=1,   chiMin=0, chiMax=np.pi,
-		depthAlpha=1, depthBeta=1, depthMin=-20, depthMax=20,
+		depthAlpha=1, depthBeta=1, depthMin=-50, depthMax=50,
 		fluxAlpha=1,  fluxBeta=1,  fluxMin=0.01, fluxMax=1,
 		noiseAlpha=1, noiseBeta=1, noiseMin=0.01, noiseMax=1.0):
 		"""
@@ -127,11 +127,11 @@ class simulate:
 
 
 		Stored Variables:
-			chi_			phase offset (tuple if complex)
-			depth_			faraday depth (tuple if complex)
-			flux_			polarization flux (tuple if complex)
-			label_			complex (1) or simple (0)
-			sig_			noise
+			chi_		phase offset (tuple if complex)
+			depth_		faraday depth (tuple if complex)
+			flux_		polarization flux (tuple if complex)
+			label_		complex (1) or simple (0)
+			sig_		noise
 		"""
 
 
@@ -162,7 +162,7 @@ class simulate:
 
 		depth[loc] = list(zip( depth[loc], depth[loc] + self.__randBetaDepth(size, alpha=depthAlpha, beta=depthBeta, depthMax=depthMax)))
 		flux[loc]  = list(zip( flux[loc],  self.__randBetaFlux(size, alpha=fluxAlpha, beta=fluxBeta, fluxMin=fluxMin, fluxMax=fluxMax)))
-		chi[loc]   = list(zip( chi[loc],   chi[loc] + self.__randBetaChi(size, alpha=chiAlpha, beta=chiBeta, chiMin=chiMin, chiMax = chiMax)))
+		chi[loc]   = list(zip( chi[loc],   np.mod(chi[loc] + self.__randBetaChi(size, alpha=chiAlpha, beta=chiBeta, chiMin=chiMin, chiMax = chiMax), chiMax)))
 
 
 		# ===========================================

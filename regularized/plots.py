@@ -146,5 +146,6 @@ class plots:
 		# ===================================================
 		if save:
 			plt.savefig(imfile)
+			plt.close('all')
 		else:
 			plt.show()
