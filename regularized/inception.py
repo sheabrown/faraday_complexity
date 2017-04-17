@@ -2,7 +2,7 @@ from keras.models import Model, load_model
 from keras.layers import Activation, Conv1D, Dense, Dropout, Flatten, Input
 from keras.layers import concatenate
 from keras.layers.pooling import MaxPooling1D, AveragePooling1D
-from keras.callbacks import EarlyStopping
+from keras.callbacks import EarlyStopping, CSVLogger
 from keras.optimizers import SGD
 from keras.regularizers import l2
 from time import perf_counter
@@ -257,14 +257,15 @@ class inception(loadData, plots, analysis):
 		#	training set.
 		# =============================================
 		earlyStop = EarlyStopping(monitor=monitor, min_delta=min_delta, patience=patience, verbose=0, mode='auto')
+		logger = CSVLogger('training.log')
 
 		try:
 			self.validX_
 			self.model_.fit(self.trainX_, self.trainY_, batch_size=batch_size, epochs=epochs, verbose=verbose, 
-					validation_data=(self.validX_, self.validY_), callbacks=[earlyStop])
+					validation_data=(self.validX_, self.validY_), callbacks=[earlyStop, logger])
 		except:
 			self.model_.fit(self.trainX_, self.trainY_, batch_size=batch_size, epochs=epochs, verbose=verbose, 
-					validation_data=(self.trainX_, self.trainY_), callbacks=[earlyStop])
+					validation_data=(self.trainX_, self.trainY_), callbacks=[earlyStop, logger])
 
 		# =============================================
 		#	Compute the training time (minutes)
