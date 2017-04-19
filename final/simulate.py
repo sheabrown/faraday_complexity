@@ -1,4 +1,5 @@
 import numpy as np
+import os, sys, shutil
 from time import perf_counter
 
 class simulate:
@@ -10,33 +11,41 @@ class simulate:
 	def __init__(self):
 		pass
 
-	def __randDepth(self, size, depthMin=-20, depthMax=20):
+	def __randDepth(self, size, depthMin=-40, depthMax=40):
 		return np.random.uniform(depthMin, depthMax, size)
 
 	def __randFlux(self, size, fluxMin=0.01, fluxMax=1):
 		return np.random.uniform(fluxMin, fluxMax, size)
 
-	def __randChi(self, size, chiMin=0, chiMax=2*np.pi):
+	def __randChi(self, size, chiMin=0, chiMax=np.pi):
 		return np.random.uniform(chiMin, chiMax, size)
 
 	def __randNoise(self, size, noiseMin=0.01, noiseMax=1.0):
 		return np.random.uniform(noiseMin, noiseMax, size)
 
-
-	def _generateParams(self, N, depthMin=-15, depthMax=15, pcomplex=0.35, seed=8595):
+	def _generateParams(self, N, depthMin=-50, depthMax=50, 
+		fluxMin=0.01, fluxMax=1, chiMin=0, chiMax=np.pi,
+		noiseMin=0.01, noiseMax=1.0, pcomplex=0.35, seed=8595):
 		"""
 		Generates parameters for N faraday spectra,
 		with the probability of the source being
 		complex given by "pcomplex".
 
 		To call:
-			_generateParams(N, depthMin, depthMax, pcomplex)
+			_generateParams(N, ...)
 
 		Parameters:
-			N				number of parameter sets to generate
+			N			number of parameter sets to generate
+			pcomplex		probability the source is complex
+			chiMin
+			chiMax
 			depthMin
 			depthMax
-			pcomplex		probability the source is complex
+			fluxMin
+			fluxMax
+			noiseMin
+			noiseMax
+			seed
 
 		Stored Variables:
 			chi_			phase offset (tuple if complex)
@@ -54,11 +63,10 @@ class simulate:
 		# ===========================================
 		#	Generate parameters for the first comp.
 		# ===========================================
-		depth = self.__randDepth(N).astype('object')
-		#flux  = self.__randFlux(N).astype('object')
+		depth = self.__randDepth(N, depthMin=depthMin, depthMax=depthMax).astype('object')
 		flux  = np.ones(N).astype('object')
-		chi   = self.__randChi(N).astype('object')
-		sig   = self.__randNoise(N)
+		chi   = self.__randChi(N, chiMin=chiMin, chiMax=chiMax).astype('object')
+		sig   = self.__randNoise(N, noiseMin=noiseMin, noiseMax=noiseMax)
 
 		# ===========================================
 		#	Array of labels (1 = complex, 0 = single)
@@ -72,9 +80,9 @@ class simulate:
 		loc = np.where(label == 1)[0]
 		size = len(loc)
 
-		depth[loc] = list(zip(depth[loc], self.__randDepth(size)))
-		flux[loc]  = list(zip(flux[loc],  self.__randFlux(size)))
-		chi[loc]   = list(zip(chi[loc],   self.__randChi(size)))
+		depth[loc] = list(zip( depth[loc], self.__randDepth(size, depthMin=depthMin, depthMax=depthMax) ))
+		flux[loc]  = list(zip( flux[loc],  self.__randFlux(size,  fluxMin=fluxMin,   fluxMax=fluxMax)   ))
+		chi[loc]   = list(zip( chi[loc],   self.__randChi(size,   chiMin=chiMin,     chiMax = chiMax) ))
 
 
 		# ===========================================
@@ -87,7 +95,88 @@ class simulate:
 		self.label_ = label
 
 
-	def _simulateNspec(self, N=5, pcomplex=0.35, width=100, seed=8008, save=False, outdir='./', timeit=False):
+	# ===========================================================
+	#	Beta distributed
+	# ===========================================================
+
+	def __randBetaChi(self, size, alpha=1, beta=1, chiMin=0, chiMax=2*np.pi):
+		return (chiMax - chiMin) * np.random.beta(alpha, beta, size) + chiMin
+
+	def __randBetaDepth(self, size, alpha=1, beta=1, depthMax=30):
+		sign = np.random.choice([-1,1], size, [0.5, 0.5])
+		return depthMax * sign * np.random.beta(alpha, beta, size)
+
+	def __randBetaFlux(self, size, alpha=1, beta=1, fluxMin=0.01, fluxMax=1):
+		return (fluxMax - fluxMin) * np.random.beta(alpha, beta, size) + fluxMin
+
+	def __randBetaNoise(self, size, alpha=1, beta=1, noiseMin=0.01, noiseMax=1.0):
+		return (noiseMax - noiseMin) * np.random.beta(alpha, beta, size) + noiseMin
+
+	def _generateBetaParams(self, N, pcomplex=0.35, seed=8595,
+		chiAlpha=1,   chiBeta=1,   chiMin=0, chiMax=np.pi,
+		depthAlpha=1, depthBeta=1, depthMin=-50, depthMax=50,
+		fluxAlpha=1,  fluxBeta=1,  fluxMin=0.01, fluxMax=1,
+		noiseAlpha=1, noiseBeta=1, noiseMin=0.01, noiseMax=1.0):
+		"""
+		Generates parameters for N faraday spectra,
+		with the probability of the source being
+		complex given by "pcomplex".
+
+		To call:
+			_generateBetaParams(N, ...)
+
+
+		Stored Variables:
+			chi_		phase offset (tuple if complex)
+			depth_		faraday depth (tuple if complex)
+			flux_		polarization flux (tuple if complex)
+			label_		complex (1) or simple (0)
+			sig_		noise
+		"""
+
+
+		# ===========================================
+		#	Set the random seed
+		# ===========================================
+		np.random.seed(seed)
+
+		# ===========================================
+		#	Generate parameters for the first comp.
+		# ===========================================
+		depth = self.__randDepth(N, depthMin=depthMin, depthMax=depthMax).astype('object')
+		flux  = np.ones(N).astype('object')
+		chi   = self.__randChi(N, chiMin=chiMin, chiMax=chiMax).astype('object')
+		sig   = self.__randBetaNoise(N, alpha=noiseAlpha, beta=noiseBeta, noiseMin=noiseMin, noiseMax=noiseMax)
+
+		# ===========================================
+		#	Array of labels (1 = complex, 0 = single)
+		# ===========================================
+		label = np.random.binomial(1, pcomplex, N)
+
+		# ===========================================
+		#	Generate random flux, depth, chi, and
+		#	sigma for the two component case
+		# ===========================================
+		loc = np.where(label == 1)[0]
+		size = len(loc)
+
+		depth[loc] = list(zip( depth[loc], depth[loc] + self.__randBetaDepth(size, alpha=depthAlpha, beta=depthBeta, depthMax=depthMax)))
+		flux[loc]  = list(zip( flux[loc],  self.__randBetaFlux(size, alpha=fluxAlpha, beta=fluxBeta, fluxMin=fluxMin, fluxMax=fluxMax)))
+		chi[loc]   = list(zip( chi[loc],   np.mod(chi[loc] + self.__randBetaChi(size, alpha=chiAlpha, beta=chiBeta, chiMin=chiMin, chiMax = chiMax), chiMax)))
+
+
+		# ===========================================
+		#	Store the results
+		# ===========================================
+		self.depth_ = depth
+		self.flux_  = flux
+		self.chi_   = chi
+		self.sig_   = sig
+		self.label_ = label
+
+
+
+	def _simulateNspec(self, N=5, pcomplex=0.35, width=100, seed=8008, save=False, dir='./', timeit=False):
 		"""
 		Function for generating N polarization
 		and Faraday spectra. If the parameters
@@ -191,26 +280,28 @@ class simulate:
 		Q = np.asarray(Q)
 		U = np.asarray(U)
 
-
-		self.Q_ = Q
-		self.U_ = U
 		self.X_ = X
 		self.S_ = np.dstack((Q,U))
 
 
 		# =======================================
 		#	Save the data in an array
+		#	Copy the generating script
 		# =======================================
 		if save:
-			np.save(outdir + "X_data.npy", self.X_)
-			np.save(outdir + "Q_data.npy", self.Q_)
-			np.save(outdir + "U_data.npy", self.U_)
-			np.save(outdir + "S_data.npy", self.S_)
-			np.save(outdir + "label.npy", self.label_)
-			np.save(outdir + "depth.npy", self.depth_)
-			np.save(outdir + "flux.npy", self.flux_)
-			np.save(outdir + "chi.npy", self.chi_)
-			np.save(outdir + "sig.npy", self.sig_)
+
+			if not os.path.exists(dir):
+				os.makedirs(dir)
+
+			np.save(dir + "X_data.npy", self.X_)
+			np.save(dir + "S_data.npy", self.S_)
+			np.save(dir + "label.npy", self.label_)
+			np.save(dir + "depth.npy", self.depth_)
+			np.save(dir + "flux.npy", self.flux_)
+			np.save(dir + "chi.npy", self.chi_)
+			np.save(dir + "sig.npy", self.sig_)
+
+			shutil.copyfile(sys.argv[0], dir + sys.argv[0])
 
 
 		if timeit:
