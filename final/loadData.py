@@ -13,7 +13,7 @@ class loadData:
 	"""
 
 
-	def __load(self, dir, cutoff=None, abs=False):
+	def __load(self, dir, abs=False):
 		features = np.load(dir + "X_data.npy")
 		labels = np.load(dir + "label.npy")
 		classes = np_utils.to_categorical(labels)
