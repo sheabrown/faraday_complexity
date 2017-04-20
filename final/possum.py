@@ -1,7 +1,5 @@
-import numpy as np
+from simulate import *
 import matplotlib.pyplot as plt
-
-from simulate import simulate
 
 class possum(simulate):
 	"""
@@ -72,7 +70,7 @@ class possum(simulate):
 		self.nu_ = self._createFrequency(1130., 1430., nchan=300)
 
 
-	def _createFrequency(self, numin=700., numax=1800., nchan=100.):
+	def _createFrequency(self, numin=700., numax=1800., nchan=100., store=False):
 		"""
 		Creates an array of evenly spaced frequencies
 		numin and numax are in [MHz]
@@ -97,24 +95,27 @@ class possum(simulate):
 		#	Generate an evenly spaced grid
 		#	of frequencies and return
 		# ======================================
-		return(np.arange(nchan)*(numax-numin)/(nchan-1) + numin)
+		if store:
+			self.nu_ = np.arange(nchan)*(numax-numin)/(nchan-1) + numin
+		else:
+			return(np.arange(nchan)*(numax-numin)/(nchan-1) + numin)
 
 
 
 
-	def _createNspec(self, flux, depth, chi, sigma=0):
+	def _createNspec(self, flux, depth, chi, sig=0):
 		"""
 		Function for generating N faraday spectra
-		and merging
+		and merging into one polarization spectrum.
 
 		To call:
-			createNspec(flux, depth, chi)
+			createNspec(flux, depth, chi, sig)
 
 		Parameters:
 			flux 		[float, array]
 			depth		[float, array]
-			chi			[float, array]
-			sigma		[float, const]
+			chi		[float, array]
+			sig		[float, const]
 		"""
 		# ======================================
 		#	Convert inputs to matrices
@@ -133,8 +134,8 @@ class possum(simulate):
 		# ======================================
 		#	Add Gaussian noise
 		# ======================================
-		if sigma != 0:
-			P += self._addNoise(sigma, P.size)
+		if sig != 0:
+			P += self._addNoise(sig, P.size)
 
 		# ======================================
 		#	Store the polarization

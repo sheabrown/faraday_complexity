@@ -1,19 +1,34 @@
 # =============================================================
-# create_spectrum.py contains functions for creating synthetic
-# polarization spectra over a range of frequencies. These 
-# spectra can be used to train an rm_machine to assess the
-# complexity of a Faraday spectrum for the POSSUM survey. 
+#Input 
+#----------------------------------------------------------
+#array_size   ------>  Number of spectrums in dataset
+#rangeFd      ------>  Range of Rotation Measures
+#rangeSig     ------>  Range of Sigmas
+#rangeChi     ------>  Range of ChiNot 
+#rangeFlux    ------>  Range of Fluxes
+#is_complex   ------>  Number of Sources
+###########################################################
+#Output
+#----------------------------------------------------------
+#X_2[count,:,0]  ------>  Normalized Real component of array 
+#X_2[count,:,1]  ------>  Normalized Complex component of array 
+#Y[count]        ------>  Categorical array ==> 0 if simple, 1 if complex
+#FD[count]       ------>  Array of size array_size of all Rotation Measure (FD)  parameters
+#CH[count]       ------>  Array of size array_size of all ChiNot  parameters
+#FL[count]       ------>  Array of size array_size of all Flux  parameters
+#SI[count]      ------>  Array of size array_size of all sigma parameters
+
+###########################################################
 # =============================================================
-def dmlCreateSpectrum(param_value=6,version='8',rangeFd=[-69,69],rangeSig=[0.01,1],rangeChi=[0,3.14], rangeFlux=[0.01,1]):	
+def dmlCreateSpectrum(array_size=6,rangeFd=[-69,69],rangeSig=[0.01,1],rangeChi=[0,3.14], rangeFlux=[0.01,1],num_sources=2):	
 	import numpy as np
 	from matplotlib import pyplot as plt
 	import time
+	
 	plt.ion()
 	c     = 2.99e+08 #speed of light in m/s
 	mhz   = 1.0e+06  #mega
 	FWHM  = 23     # -3FWHM : 3FWHM  22.4 (use 23) rad/m**2 
-	
-	
 	
 	def createFrequency(numin=700.,numax=1800., nchan=100.):
 		# Create an array of evenly spaced frequencies
@@ -56,118 +71,136 @@ def dmlCreateSpectrum(param_value=6,version='8',rangeFd=[-69,69],rangeSig=[0.01,
 			F.append(temp)
 		return np.asarray(phi), np.asarray(F)/len(nu)
 	
-	def plot_pol(pol,nu):
-		spec = pol
-		fig, ax0 = plt.subplots(nrows=1)
-		ax0.errorbar(nu/mhz,spec.real,yerr=np.ones(len(nu))*0.1,errorevery=10,markersize=4,label='Q',fmt='o')
-		ax0.errorbar(nu/mhz,spec.imag,yerr=np.ones(len(nu))*0.1,errorevery=10,markersize=4,label='U',fmt='o')
-		ax0.set_title('Q & U')
-		ax0.set_xlabel(r'$\nu$ [MHz]')
-		ax0.set_ylabel(r'P($\nu$) [Jy/beam]')
-		ax0.set_xlim([700,1800])
-		#ax0.text(750, 0.85, r'$\phi=4 rad/m^2$')
-		legend = ax0.legend(loc='upper right', shadow=True)
-		plt.show()
+	###################
+	#Entry Parameters
+	###################
+	s  = (array_size,201,2)                          
+	nu = createPOSSUMSpectrum()                
+	count= 0
+	###################
+	#Array Setup
+	###################
+	X_2 = np.zeros(s)
+	Y   = np.zeros(s[0])
+	FD  = np.zeros(s[0])
+	CH  = np.zeros(s[0])
+	FL  = np.zeros(s[0])
+	SI  = np.zeros(s[0])
 	
-	def plot_far(Faraday,phi):
-		fig, ax1 = plt.subplots(nrows=1)
-		ax1.errorbar(phi,np.abs(Faraday),yerr=np.ones(len(phi))*0.01,markersize=4,errorevery=10,fmt='o')
-		ax1.set_title('Faraday Spectrum')
-		ax1.set_xlabel(r'$\phi$ [rad/m$^2$]')
-		ax1.set_ylabel(r'F($\phi$) [Jy/beam]')
-		#ax1.text(55, 0.6, r'$\phi= $'+str(peak)+ r' $rad/m^2$')
-		#plt.subplots_adjust(hspace=0.5)
-		plt.show()	
-		
-	def simulateData(values_per_parameter=6,rangeSig=[0.01,1],rangeChi=[0,np.pi],rangeFd=[-3*FWHM,3*FWHM], rangeFlux=[0.01,1]):
-		array1=np.linspace(rangeSig[0],rangeSig[1],    num=values_per_parameter)                              ##Noise variation
-		array2=np.linspace(rangeChi[0],rangeChi[1],    num=values_per_parameter)
-		array3=np.linspace(rangeFd[0],rangeFd[1],      num=values_per_parameter)
-		array4=np.linspace(rangeFlux[0],rangeFlux[1],  num=values_per_parameter)
-		array=[array1,array2,array3,array4]
-		
-		vary_ch_i = (rangeChi[1]-rangeChi[0])  / (50*values_per_parameter)
-		vary_fd_i = (rangeFd[1]-rangeFd[0])    / (50*values_per_parameter)          
-		vary_fl_i = (rangeFlux[1]-rangeFlux[0])/ (50*values_per_parameter)
-		print(vary_ch_i,vary_fd_i,vary_fl_i)
+	###################
+	#Complex 2 Source
+	###################
+	if(num_sources==2):
+		for i in range(array_size):
+			if(i%1000==1):
+				print(str(i),'/',str(array_size))
+			vary_ch = rangeChi[0]  + np.random.rand()*(rangeChi[1]- rangeChi[0])
+			vary_fd = rangeFd[0]   + np.random.rand()*(rangeFd[1]-rangeFd[0])          
+			vary_fl = rangeFlux[0] + np.random.rand()*(rangeFlux[1]-rangeFlux[0])
+			vary_si	= rangeSig[0]  + np.random.rand()*(rangeSig[1] -rangeSig[0])
+			vary_ch2 = rangeChi[0]  + np.random.rand()*(rangeChi[1]- rangeChi[0])
+			vary_fd2 = rangeFd[0]   + np.random.rand()*(rangeFd[1]-rangeFd[0])    
+			
+			spec            = create2Spectrum(nu, flux2 = vary_fl, fdepth2 = vary_fd,
+												chinot2= vary_ch, fdepth1=vary_fd2, chinot1=vary_ch2)
+			noise1, noise2  = createNoiseSpectrum(nu, vary_si)
+			spec           += noise1+noise2*1j
+			phi, Faraday    = createFaradaySpectrum(spec, nu)
+			max = np.max(np.abs(Faraday))
+			Faraday_Normalized=Faraday/max
+			X_2[count,:,0]= Faraday_Normalized.imag
+			X_2[count,:,1]= Faraday_Normalized.real
+			Y[count]=1                        #Complex Spectrum (uses create2Spectrum)
+			FD[count]=vary_fd
+			CH[count]=vary_ch
+			FL[count]=vary_fl
+			SI[count]=vary_si
+			count+=1
 
-		size = int(2*values_per_parameter**4)
-		#print('Size:',size)
-		psize=size/3
-		s  = (size,201,2)                          
-		X  = np.zeros(s) 
-		X_2= np.zeros(s)
-		Y  = np.zeros(s[0])						   
-		nu = createPOSSUMSpectrum()                
-		count= 0
-		progress=0
-		#Nested For Loops
-		for i in range(len(array[0])):                                     ##Noise variation
-			for j in range(len(array[1])):                                 ##Chinot variation
-				for k in range(len(array[2])):                             ##Faraday Depth Variation
-					for l in range(len(array[3])):                         ##Flux variation
-						vary_ch = vary_ch_i*np.random.randn()
-						vary_fd = vary_fd_i*np.random.randn()          
-						vary_fl = vary_fl_i*np.random.randn()
-						while((array[3][l]+vary_fl)<=0):
-							print(vary_fl,array[3][l])
-							vary_fl=vary_fl_i*np.random.randn()
+	###################
+	#Simple Source
+	###################
+	elif(num_sources==1):
+		for i in range(array_size):
+			if(i%1000==0):
+				print(str(i),'/',str(array_size))
+			vary_ch = rangeChi[0]  + np.random.rand()*(rangeChi[1]- rangeChi[0])
+			vary_fd = rangeFd[0]   + np.random.rand()*(rangeFd[1]-rangeFd[0])          
+			vary_fl = rangeFlux[0] + np.random.rand()*(rangeFlux[1]-rangeFlux[0])
+			vary_si	= rangeSig[0]  + np.random.rand()*(rangeSig[1] -rangeSig[0])
 	
-						spec            = create2Spectrum(nu, flux2 = array[3][l]+vary_fl, fdepth2 = array[2][k]+vary_fd, chinot2= array[1][j]+vary_ch)
-						noise1, noise2  = createNoiseSpectrum(nu, array[0][i])
-						spec           += noise1+noise2*1j
-						phi, Faraday    = createFaradaySpectrum(spec, nu)
-						max = np.max(np.abs(Faraday))
-						Faraday_Normalized=Faraday/max
-						X[count,:,0]=Faraday.imag         #Imaginary component
-						X[count,:,1]=Faraday.real         #Real component
-						X_2[count,:,0]= Faraday_Normalized.imag
-						X_2[count,:,1]= Faraday_Normalized.real
-						Y[count]=1                        #Complex Spectrum (uses create2Spectrum)
-						count+=1						  #Iterate counter
-						
-						if (count>progress):
-							print(str(count)+" / "+str(size))
-							progress+=psize
-							#plot_far(Faraday,phi)
-						
-						vary_ch = vary_ch_i*np.random.randn()
-						vary_fd = vary_fd_i*np.random.randn()          
-						vary_fl = vary_fl_i*np.random.randn()
-						while((array[3][l]+vary_fl)<=0):
-							#print(vary_fl,array[3][l])
-							vary_fl=vary_fl_i*np.random.randn()
-						spec            = create1Spectrum(nu, flux1 = array[3][l]+vary_fl, fdepth1 = array[2][k]+vary_fd, chinot1 = array[1][j]+vary_ch)
-						noise3, noise4  = createNoiseSpectrum(nu,array[0][i])
-						spec           += noise3+noise4*1j
-						phi, Faraday    = createFaradaySpectrum(spec, nu)
-						max = np.max(np.abs(Faraday))
-						Faraday_Normalized=Faraday/max
-						X[count,:,0]=Faraday.imag
-						X[count,:,1]=Faraday.real
-						X_2[count,:,0]= Faraday_Normalized.imag
-						X_2[count,:,1]= Faraday_Normalized.real
-						Y[count]=0                        
-						count+=1
-									
-		rng_state = np.random.get_state()       
-		np.random.shuffle(X)
-		np.random.set_state(rng_state)          
-		np.random.shuffle(Y)
-		np.random.set_state(rng_state)          
-		np.random.shuffle(X_2)
+			
+			spec            = create1Spectrum(nu, flux1 = vary_fl, fdepth1 = vary_fd, chinot1= vary_ch)
+			noise1, noise2  = createNoiseSpectrum(nu, vary_si)
+			spec           += noise1+noise2*1j
+			phi, Faraday    = createFaradaySpectrum(spec, nu)
+			max = np.max(np.abs(Faraday))
+			Faraday_Normalized=Faraday/max
+			X_2[count,:,0]= Faraday_Normalized.imag
+			X_2[count,:,1]= Faraday_Normalized.real
+			Y[count]=0                        #Complex Spectrum (uses create2Spectrum)
+			FD[count]=vary_fd
+			CH[count]=vary_ch
+			FL[count]=vary_fl
+			SI[count]=vary_si
+			count+=1
+	elif(num_sources==3):
+		for i in range(array_size//2):
+			if(i%1000==0):
+				print(str(i),'/',str(array_size))
+			vary_ch = rangeChi[0]  + np.random.rand()*(rangeChi[1]- rangeChi[0])
+			vary_fd = rangeFd[0]   + np.random.rand()*(rangeFd[1]-rangeFd[0])          
+			vary_fl = rangeFlux[0] + np.random.rand()*(rangeFlux[1]-rangeFlux[0])
+			vary_si	= rangeSig[0]  + np.random.rand()*(rangeSig[1] -rangeSig[0])
+	
+			
+			spec            = create1Spectrum(nu, flux1 = vary_fl, fdepth1 = vary_fd, chinot1= vary_ch)
+			noise1, noise2  = createNoiseSpectrum(nu, vary_si)
+			spec           += noise1+noise2*1j
+			phi, Faraday    = createFaradaySpectrum(spec, nu)
+			max = np.max(np.abs(Faraday))
+			Faraday_Normalized=Faraday/max
+			X_2[count,:,0]= Faraday_Normalized.imag
+			X_2[count,:,1]= Faraday_Normalized.real
+			Y[count]=0                        #Complex Spectrum (uses create2Spectrum)
+			FD[count]=vary_fd
+			CH[count]=vary_ch
+			FL[count]=vary_fl
+			SI[count]=vary_si
+			count+=1
 		
-		#np.save('x_'+version+'_'+str(int(values_per_parameter))+'.npy',X)
-		np.save('x_'+version+'_Normalized_'+str(int(values_per_parameter))+'.npy',X_2)
-		np.save('y_'+version+'_'+str(int(values_per_parameter))+'.npy',Y)
+		print(count,array_size,array_size//2)
+		for i in range(array_size//2,array_size):
+			if(i%1000==0):
+				print(str(i),'/',str(array_size))
+			vary_ch = rangeChi[0]  + np.random.rand()*(rangeChi[1] - rangeChi[0])
+			vary_fd = rangeFd[0]   + np.random.rand()*(rangeFd[1]  - rangeFd[0])          
+			vary_fl = rangeFlux[0] + np.random.rand()*(rangeFlux[1]- rangeFlux[0])
+			vary_si	= rangeSig[0]  + np.random.rand()*(rangeSig[1] - rangeSig[0])
+			vary_ch2 = rangeChi[0]  + np.random.rand()*(rangeChi[1]- rangeChi[0])
+			vary_fd2 = rangeFd[0]   + np.random.rand()*(rangeFd[1]-rangeFd[0])    
+			
+			spec            = create2Spectrum(nu, flux2 = vary_fl, fdepth2 = vary_fd,
+												chinot2= vary_ch, fdepth1=vary_fd2, chinot1=vary_ch2)
+			noise1, noise2  = createNoiseSpectrum(nu, vary_si)
+			spec           += noise1+noise2*1j
+			phi, Faraday    = createFaradaySpectrum(spec, nu)
+			max = np.max(np.abs(Faraday))
+			Faraday_Normalized=Faraday/max
+			X_2[count,:,0]= Faraday_Normalized.imag
+			X_2[count,:,1]= Faraday_Normalized.real
+			Y[count]=1                        #Complex Spectrum (uses create2Spectrum)
+			FD[count]=vary_fd
+			CH[count]=vary_ch
+			FL[count]=vary_fl
+			SI[count]=vary_si
+			count+=1
+		#for i in range(7):
+		#	X_train, y_train = shuffle(X_train, y_train, random_state=0)
+		#	X_test, y_test = shuffle(X_test, y_test,random_state=0)
 	
-	
-	print("Starting Data Simulation")
-	start_time = time.time()	
-	simulateData(values_per_parameter=param_value,rangeFd=rangeFd,rangeSig=rangeSig,rangeChi=rangeChi, rangeFlux=rangeFlux)
-	timing    = (time.time() - start_time)
-	seconds = round(timing % 60)
-	minutes = round(timing / 60)
-	print("--- %s minutes ---" % minutes)
-	print(  "--- %s seconds ---" % seconds )
-	
+		
+
+		
+	print("Done creating data")
+	return X_2, Y, FD,CH,FL,SI
