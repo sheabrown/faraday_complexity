@@ -5,6 +5,7 @@ from keras.layers.pooling import MaxPooling1D, AveragePooling1D
 from keras.callbacks import EarlyStopping, CSVLogger
 from keras.optimizers import SGD
 from keras.regularizers import l2
+from sklearn.metric import log_loss
 from time import perf_counter
 from loadData import *
 from plots import *
@@ -328,6 +329,7 @@ class inception(loadData, plots, analysis):
 			self.testX_
 			self.testProb_ = self.model_.predict(self.testX_)[:,1]
 			self.testPred_ = np.where(self.testProb_ > prob, 1, 0)
+			self.testLogLoss_ = log_loss(self.testLabel_, self.testProb_)
 		except:
 			print("Please load a test dataset.")
 			sys.exit(1)
@@ -348,7 +350,29 @@ class inception(loadData, plots, analysis):
 			The probability that the source is complex
 			is returned as an array.
 		"""
-		return self.model_.predict(data)[:,1]
+
+		if data == 'train':
+			try:
+				self.trainX_
+				self.trainProb_ = self.model_.predict(self.trainX_)[:,1]
+				self.trainPred_ = np.where(self.trainProb_ > prob, 1, 0)
+				self.trainLogLoss_ = log_loss(self.trainLabel_, self.trainProb_)
+			except:
+				print("Please load a training dataset.")
+				sys.exit(1)		
+
+		elif data == 'valid':
+			try:
+				self.validX_
+				self.validProb_ = self.model_.predict(self.validX_)[:,1]
+				self.validPred_ = np.where(self.validProb_ > prob, 1, 0)
+				self.validLogLoss_ = log_loss(self.validLabel_, self.validProb_)
+			except:
+				print("Please load a validation dataset.")
+				sys.exit(1)		
+
+		else:
+			return self.model_.predict(data)[:,1]
 
 
 
