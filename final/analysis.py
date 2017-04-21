@@ -83,11 +83,12 @@ class analysis:
 		flux  = pd.Series(flux, name='flux')
 		prob  = pd.Series(prob, name='prob')
 		sig   = pd.Series(sig, name="sig")
+		loc   = pd.Series(loc, name='idx')
 
 		# ===================================================
 		#	Store the results in a dataframe
 		# ===================================================
-		self.dfComplex_ = pd.concat([chi, depth, flux, prob, sig], axis=1)
+		self.dfComplex_ = pd.concat([chi, depth, flux, prob, sig, loc], axis=1)
 
 
 	def _getSimpleParams(self):
@@ -144,11 +145,12 @@ class analysis:
 		flux  = pd.Series(flux, name='flux')
 		prob  = pd.Series(prob, name='prob')
 		sig   = pd.Series(sig, name="sig")
+		loc   = pd.Series(loc, name='indx')
 
 		# ===================================================
 		#	Store the results in a dataframe
 		# ===================================================
-		self.dfSimple_ = pd.concat([chi, depth, flux, prob, sig], axis=1)
+		self.dfSimple_ = pd.concat([chi, depth, flux, prob, sig, loc], axis=1)
 
 
 	def _getF1(self, step=0.025, save=False, suffix='', dir='./'):
