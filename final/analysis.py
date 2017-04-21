@@ -1,4 +1,4 @@
-from sklearn.metrics import confusion_matrix, f1_score, roc_curve
+from sklearn.metrics import confusion_matrix, f1_score, roc_curve, auc
 import numpy as np
 import pandas as pd
 
@@ -188,6 +188,7 @@ class analysis:
 
 		self.fpr_ = fpr
 		self.tpr_ = tpr
+		self.auc_ = auc(fpr, tpr)
 
 
 		if save:
