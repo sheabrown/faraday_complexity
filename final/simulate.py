@@ -189,7 +189,7 @@ class simulate:
 						save=False, outdir='./')
 
 		Parameters:
-			N			number of spectra (if not stored)
+			N		number of spectra (if not stored)
 			pcomplex	probabililty the source is complex
 			width		width of faraday spectra to grab
 			seed		random number seed
@@ -226,10 +226,9 @@ class simulate:
 		if timeit:
 			start = perf_counter()
 
-		print("{:d} of {:d}".format(1, N))
 		for itr in range(N):
-			if ((itr+1) % 500) == 0:
-				print("{:d} of {:d}".format(itr+1, N))
+			print("{:d} of {:d}".format(itr+1, N), end='\r')
+			sys.stdout.flush()
 
 			# =======================================
 			#	Create the polarization spectrum
