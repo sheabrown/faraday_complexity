@@ -5,7 +5,7 @@ from keras.layers.pooling import MaxPooling1D, AveragePooling1D
 from keras.callbacks import EarlyStopping, CSVLogger
 from keras.optimizers import SGD
 from keras.regularizers import l2
-from sklearn.metric import log_loss
+from sklearn.metrics import log_loss
 from time import perf_counter
 from loadData import *
 from plots import *
@@ -397,9 +397,9 @@ class inception(loadData, plots, analysis):
 if __name__ == '__main__':
 	cnn = inception(0.0005)
 
-	cnn._loadTrain("data/train/V2/")
-	cnn._loadValid("data/valid/V2/")
-	cnn._loadTest("data/test/V2/")
+	cnn._loadTrain("data/train/")
+	cnn._loadValid("data/valid/")
+	cnn._loadTest("data/test/")
 
 
 	cnn._inception(convl=[3,5,23], pool=[3])
