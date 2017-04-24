@@ -219,8 +219,10 @@ class inception(loadData, plots, analysis):
 		# ===========================================
 		name = blockname + str(self.__inception) + '/c1x1'
 
-		convl_1x1 = Conv1D(32, kernel_size=1, strides=strides, kernel_regularizer=l2(self.__l2reg), name=name)(self.model_[-1])
-		model.append(convl_1x1)
+		convl_1x1_64 = Conv1D(64, kernel_size=1, strides=strides, kernel_regularizer=l2(self.__l2reg), name=name)(self.model_[-1])
+		convl_1x1_32 = Conv1D(32, kernel_size=1, strides=strides, kernel_regularizer=l2(self.__l2reg), name=name)(self.model_[-1])
+
+		model.append(convl_1x1_64)
 
 		# ===========================================
 		# 	Perform a 1xc convolution for
@@ -229,7 +231,7 @@ class inception(loadData, plots, analysis):
 		for c in convl:
 			name = blockname + str(self.__inception) + '/c1x' + str(c)
 
-			convl_1xc = Conv1D(64, kernel_size=c, strides=1, padding=padding, activation=act, kernel_regularizer=l2(self.__l2reg), name=name)(convl_1x1)
+			convl_1xc = Conv1D(64, kernel_size=c, strides=1, padding=padding, activation=act, kernel_regularizer=l2(self.__l2reg), name=name)(convl_1x1_32)
 			model.append(convl_1xc)
 
 		# ===========================================
