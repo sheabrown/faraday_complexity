@@ -5,6 +5,7 @@ from keras.layers.pooling import MaxPooling1D, AveragePooling1D
 from keras.callbacks import EarlyStopping, CSVLogger
 from keras.optimizers import SGD
 from keras.regularizers import l2
+from sklearn.metrics import log_loss
 from time import perf_counter
 from loadData import *
 from plots import *
@@ -218,8 +219,10 @@ class inception(loadData, plots, analysis):
 		# ===========================================
 		name = blockname + str(self.__inception) + '/c1x1'
 
-		convl_1x1 = Conv1D(32, kernel_size=1, strides=strides, kernel_regularizer=l2(self.__l2reg), name=name)(self.model_[-1])
-		model.append(convl_1x1)
+		convl_1x1_64 = Conv1D(64, kernel_size=1, strides=strides, kernel_regularizer=l2(self.__l2reg), name=name)(self.model_[-1])
+		convl_1x1_32 = Conv1D(32, kernel_size=1, strides=strides, kernel_regularizer=l2(self.__l2reg), name=name)(self.model_[-1])
+
+		model.append(convl_1x1_64)
 
 		# ===========================================
 		# 	Perform a 1xc convolution for
@@ -228,7 +231,7 @@ class inception(loadData, plots, analysis):
 		for c in convl:
 			name = blockname + str(self.__inception) + '/c1x' + str(c)
 
-			convl_1xc = Conv1D(64, kernel_size=c, strides=1, padding=padding, activation=act, kernel_regularizer=l2(self.__l2reg), name=name)(convl_1x1)
+			convl_1xc = Conv1D(64, kernel_size=c, strides=1, padding=padding, activation=act, kernel_regularizer=l2(self.__l2reg), name=name)(convl_1x1_32)
 			model.append(convl_1xc)
 
 		# ===========================================
@@ -328,6 +331,7 @@ class inception(loadData, plots, analysis):
 			self.testX_
 			self.testProb_ = self.model_.predict(self.testX_)[:,1]
 			self.testPred_ = np.where(self.testProb_ > prob, 1, 0)
+			self.testLogLoss_ = log_loss(self.testLabel_, self.testProb_)
 		except:
 			print("Please load a test dataset.")
 			sys.exit(1)
@@ -348,7 +352,29 @@ class inception(loadData, plots, analysis):
 			The probability that the source is complex
 			is returned as an array.
 		"""
-		return self.model_.predict(data)[:,1]
+
+		if data == 'train':
+			try:
+				self.trainX_
+				self.trainProb_ = self.model_.predict(self.trainX_)[:,1]
+				self.trainPred_ = np.where(self.trainProb_ > prob, 1, 0)
+				self.trainLogLoss_ = log_loss(self.trainLabel_, self.trainProb_)
+			except:
+				print("Please load a training dataset.")
+				sys.exit(1)		
+
+		elif data == 'valid':
+			try:
+				self.validX_
+				self.validProb_ = self.model_.predict(self.validX_)[:,1]
+				self.validPred_ = np.where(self.validProb_ > prob, 1, 0)
+				self.validLogLoss_ = log_loss(self.validLabel_, self.validProb_)
+			except:
+				print("Please load a validation dataset.")
+				sys.exit(1)		
+
+		else:
+			return self.model_.predict(data)[:,1]
 
 
 
@@ -373,9 +399,9 @@ class inception(loadData, plots, analysis):
 if __name__ == '__main__':
 	cnn = inception(0.0005)
 
-	cnn._loadTrain("data/train/V2/")
-	cnn._loadValid("data/valid/V2/")
-	cnn._loadTest("data/test/V2/")
+	cnn._loadTrain("data/train/")
+	cnn._loadValid("data/valid/")
+	cnn._loadTest("data/test/")
 
 
 	cnn._inception(convl=[3,5,23], pool=[3])
