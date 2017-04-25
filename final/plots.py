@@ -196,7 +196,8 @@ class plots:
 			plt.show()
 			plt.close()
 
-testing = plots()
-#testing._loadLog('train.log')
-testing._plotLoss('train.log')
-testing._plotAcc('train.log')
+if __name__ == '__main__':
+	testing = plots()
+	#testing._loadLog('train.log')
+	testing._plotLoss('train.log')
+	testing._plotAcc('train.log')
