@@ -148,3 +148,55 @@ class plots:
 			plt.close('all')
 		else:
 			plt.show()
+
+	def _loadLog(self, logfile):
+		"""
+		Function for loading a log file.
+
+		To call:
+			_loadLog(logfile)
+
+		Parameters:
+			logfile
+		"""
+
+		self.dfLog_ = pd.read_csv(logfile, index_col=0)
+
+
+	def _plotLoss(self, logfile, save=False, outname='loss_vs_epoch.pdf', losstype = 'adadelta'):
+		#----- Read in the Log File ----------
+		self._loadLog(logfile)
+		# -------------- Initialize the Graph ---------
+		fig = plt.figure()
+		plt.xlabel('Epoch')
+		plt.ylabel('Loss (%s)'%(losstype))
+		plt.plot(range(len(self.dfLog_['loss'])), self.dfLog_['loss'], label='Training Loss')
+		plt.plot(range(len(self.dfLog_['val_loss'])), self.dfLog_['val_loss'], label='Validation Loss')
+		plt.legend(fontsize=7.5)
+		if save:
+			plt.savefig(outname)
+			plt.close()
+		else:
+			plt.show()
+			plt.close()
+	def _plotAcc(self, logfile, save=False, outname='acc_vs_epoch.pdf'):
+		#----- Read in the Log File ----------
+		self._loadLog(logfile)
+		# -------------- Initialize the Graph ---------
+		fig = plt.figure()
+		plt.xlabel('Epoch')
+		plt.ylabel('Binary Accuracy ')
+		plt.plot(range(len(self.dfLog_['binary_accuracy'])), self.dfLog_['binary_accuracy'], label='Training Binary Accuracy')
+		plt.plot(range(len(self.dfLog_['val_binary_accuracy'])), self.dfLog_['val_binary_accuracy'], label='Validation Binary Accuracy')
+		plt.legend(fontsize=7.5)
+		if save:
+			plt.savefig(outname)
+			plt.close()
+		else:
+			plt.show()
+			plt.close()
+
+testing = plots()
+#testing._loadLog('train.log')
+testing._plotLoss('train.log')
+testing._plotAcc('train.log')
