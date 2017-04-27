@@ -163,38 +163,86 @@ class plots:
 		self.dfLog_ = pd.read_csv(logfile, index_col=0)
 
 
-	def _plotLoss(self, logfile, save=False, outname='loss_vs_epoch.pdf', losstype = 'adadelta'):
-		#----- Read in the Log File ----------
+	def _plotLoss(self, logfile, save=False, imfile='loss_vs_epoch.pdf', losstype='adadelta'):
+		"""
+		Function for plotting the training and validation loss
+		as a function of the epoch.
+
+		To call:
+			_plotLoss(logfile, ...)
+
+		Parameters:
+			logfile		name of the logfile
+			save		(boolean) save image
+			imfile		name/path of file
+
+			losstype	??????????????????
+
+		"""
+
+		# ===================================================
+		#	Read in the Log File
+		# ===================================================
 		self._loadLog(logfile)
-		# -------------- Initialize the Graph ---------
+
+		# ===================================================
+		# 	Plot the losses as a function of epoch
+		# ===================================================
 		fig = plt.figure()
-		plt.xlabel('Epoch')
-		plt.ylabel('Loss (%s)'%(losstype))
-		plt.plot(range(len(self.dfLog_['loss'])), self.dfLog_['loss'], label='Training Loss')
-		plt.plot(range(len(self.dfLog_['val_loss'])), self.dfLog_['val_loss'], label='Validation Loss')
+		plt.rc('text', usetex=True)
+		plt.rc('font', family='serif')
+		plt.xlabel(r'Epoch')
+		plt.ylabel(r'Loss (%s)'%(losstype))
+		plt.plot(self.dfLog_.index, self.dfLog_['loss'], label='Training Loss')
+		plt.plot(self.dfLog_.index, self.dfLog_['val_loss'], label='Validation Loss')
 		plt.legend(fontsize=7.5)
+
 		if save:
-			plt.savefig(outname)
+			plt.savefig(imfile)
 			plt.close()
 		else:
 			plt.show()
 			plt.close()
-	def _plotAcc(self, logfile, save=False, outname='acc_vs_epoch.pdf'):
-		#----- Read in the Log File ----------
+
+
+	def _plotAcc(self, logfile, save=False, imfile='acc_vs_epoch.pdf'):
+		"""
+		Function for plotting the training and validation accuracy
+		as a function of the epoch.
+
+		To call:
+			_plotLoss(logfile, ...)
+
+		Parameters:
+			logfile		name of the logfile
+			save		(boolean) save image
+			imfile		name/path of file
+		"""
+		# ===================================================
+		#	Read in the Log File
+		# ===================================================
 		self._loadLog(logfile)
-		# -------------- Initialize the Graph ---------
+
+		# ===================================================
+		# 	Plot the accuracy as a function of epoch
+		# ===================================================
 		fig = plt.figure()
-		plt.xlabel('Epoch')
-		plt.ylabel('Binary Accuracy ')
-		plt.plot(range(len(self.dfLog_['binary_accuracy'])), self.dfLog_['binary_accuracy'], label='Training Binary Accuracy')
-		plt.plot(range(len(self.dfLog_['val_binary_accuracy'])), self.dfLog_['val_binary_accuracy'], label='Validation Binary Accuracy')
+		plt.rc('text', usetex=True)
+		plt.rc('font', family='serif')
+		plt.xlabel(r'$\rm Epoch$')
+		plt.ylabel(r'$\rm Binary Accuracy$')
+		plt.plot(self.dfLog_.index, self.dfLog_['binary_accuracy'], label='Training Binary Accuracy')
+		plt.plot(self.dfLog_.index, self.dfLog_['val_binary_accuracy'], label='Validation Binary Accuracy')
 		plt.legend(fontsize=7.5)
 		if save:
-			plt.savefig(outname)
+			plt.savefig(imfile)
 			plt.close()
 		else:
 			plt.show()
 			plt.close()
+
+
+
 
 if __name__ == '__main__':
 	testing = plots()
