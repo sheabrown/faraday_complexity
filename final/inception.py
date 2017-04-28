@@ -219,8 +219,8 @@ class inception(loadData, plots, analysis):
 		# ===========================================
 		name = blockname + str(self.__inception) + '/c1x1'
 
-		convl_1x1_64 = Conv1D(64, kernel_size=1, strides=strides, kernel_regularizer=l2(self.__l2reg), name=name)(self.model_[-1])
-		convl_1x1_32 = Conv1D(32, kernel_size=1, strides=strides, kernel_regularizer=l2(self.__l2reg), name=name)(self.model_[-1])
+		convl_1x1_64 = Conv1D(64, kernel_size=1, strides=strides, kernel_regularizer=l2(self.__l2reg), name=name + '_64')(self.model_[-1])
+		convl_1x1_32 = Conv1D(32, kernel_size=1, strides=strides, kernel_regularizer=l2(self.__l2reg), name=name + '_32')(self.model_[-1])
 
 		model.append(convl_1x1_64)
 
@@ -229,7 +229,7 @@ class inception(loadData, plots, analysis):
 		#	each value of "c" in "convl"
 		# ===========================================
 		for c in convl:
-			name = blockname + str(self.__inception) + '/c1x' + str(c)
+			name = blockname + str(self.__inception) + '/c1x' + str(c) + '_64'
 
 			convl_1xc = Conv1D(64, kernel_size=c, strides=1, padding=padding, activation=act, kernel_regularizer=l2(self.__l2reg), name=name)(convl_1x1_32)
 			model.append(convl_1xc)
@@ -240,8 +240,9 @@ class inception(loadData, plots, analysis):
 		# ===========================================
 		for p in pool:
 			name = blockname + str(self.__inception) + '/p1x' + str(p)
-
-			pool_1xp   = MaxPooling1D(pool_size=p, strides=strides, padding=padding)(self.model_[-1])
+			pool_1xp   = MaxPooling1D(pool_size=p, strides=strides, padding=padding, name=name)(self.model_[-1])
+	
+			name = name + '_1x1_64'
 			pconvl_1x1 = Conv1D(64, kernel_size=1, padding=padding, activation=act, kernel_regularizer=l2(self.__l2reg), name=name)(pool_1xp)
 			model.append(pconvl_1x1)
 
@@ -252,7 +253,7 @@ class inception(loadData, plots, analysis):
 
 
 	def _train(self, epochs, batch_size, timeit=True, weights=None, model=None, verbose=1,
-			monitor='loss', min_delta=0, patience=10, log='train.log'):
+			monitor='loss', min_delta=0, patience=10, log='train.log', class_weight=None):
 		"""
 		Function for fitting a model on the training dataset.
 
@@ -266,12 +267,18 @@ class inception(loadData, plots, analysis):
 			weights		filename to save weights to (.h5)
 			model		filename to save model to (.h5)
 			log		logfile
+			class_weight	applying class weighting to the loss function
 			--------------------------------------------------
 		[EarlyStopping]
 			monitor		['loss', 'binary_accuracy', 'val_loss'. 'val_binary_accuracy']
 			min_delta	minimum change required
 			patience	number of epochs for monitoring min_delta
 		"""
+		if class_weight:
+			class_weight = {}
+			for y in [0,1]:
+				classNum = np.sum(y == self.trainY_, dtype='float')
+				class_weight[y] = self.trainY_.shape[0] / classNum
 
 		if timeit:
 			start = perf_counter()
@@ -287,10 +294,10 @@ class inception(loadData, plots, analysis):
 		try:
 			self.validX_
 			self.model_.fit(self.trainX_, self.trainY_, batch_size=batch_size, epochs=epochs, verbose=verbose, 
-					validation_data=(self.validX_, self.validY_), callbacks=[earlyStop, logger])
+					validation_data=(self.validX_, self.validY_), callbacks=[earlyStop, logger], class_weight=class_weight)
 		except:
 			self.model_.fit(self.trainX_, self.trainY_, batch_size=batch_size, epochs=epochs, verbose=verbose, 
-					validation_data=(self.trainX_, self.trainY_), callbacks=[earlyStop, logger])
+					validation_data=(self.trainX_, self.trainY_), callbacks=[earlyStop, logger], class_weight=class_weight)
 
 		# =============================================
 		#	Compute the training time (minutes)
