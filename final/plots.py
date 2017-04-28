@@ -163,7 +163,7 @@ class plots:
 		self.dfLog_ = pd.read_csv(logfile, index_col=0)
 
 
-	def _plotLoss(self, logfile, save=False, imfile='loss_vs_epoch.pdf', losstype='adadelta'):
+	def _plotLoss(self, logfile=None, save=False, imfile='loss_vs_epoch.pdf', losstype='adadelta'):
 		"""
 		Function for plotting the training and validation loss
 		as a function of the epoch.
@@ -183,7 +183,10 @@ class plots:
 		# ===================================================
 		#	Read in the Log File
 		# ===================================================
-		self._loadLog(logfile)
+		try:
+			self.dfLog_
+		except:
+			self._loadLog(logfile)
 
 		# ===================================================
 		# 	Plot the losses as a function of epoch
@@ -205,7 +208,7 @@ class plots:
 			plt.close()
 
 
-	def _plotAcc(self, logfile, save=False, imfile='acc_vs_epoch.pdf'):
+	def _plotAcc(self, logfile=None, save=False, imfile='acc_vs_epoch.pdf'):
 		"""
 		Function for plotting the training and validation accuracy
 		as a function of the epoch.
@@ -221,7 +224,10 @@ class plots:
 		# ===================================================
 		#	Read in the Log File
 		# ===================================================
-		self._loadLog(logfile)
+		try:
+			self.dfLog_
+		except:
+			self._loadLog(logfile)
 
 		# ===================================================
 		# 	Plot the accuracy as a function of epoch
