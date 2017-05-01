@@ -452,7 +452,7 @@ if __name__ == '__main__':
 	#testing._plotLoss('train.log',save=False)
 	#testing._plotAcc('train.log',save=False)
 	testing._loadModel('../regularized/model_V1.h5')
-	testing._loadData('/Users/jwisbell/Desktop/aml/faraday/faraday_complexity/data/train/')
+	testing._loadData('../data/test/')
 	#testing._make_cut(testing.chi_data, 'chi')
 	testing._make_2d_cut(testing.chi_data[:1000], 'chi',testing.flux_data[:1000], 'flux', num_cut=25)
 
