@@ -1,3 +1,5 @@
+# Use inception class to access these
+
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -8,12 +10,8 @@ from keras.models import load_model
 
 
 class plots:
-	# ===================================================
-	#	Dictionary for x-axis label
-	# ===================================================
-
 	"""
-	Classing for making plots for the inception model.
+	Class for making plots for the inception model.
 
 	Functions
 		_plotCNN
@@ -80,10 +78,9 @@ class plots:
 		plt.rc('text', usetex=True)
 		plt.rc('font', family='serif')		
 		plt.plot(self.threshold_, self.F1_)
-		plt.xlabel(r'$p_\mathrm{cutoff}$')
-		plt.ylabel(r'$F_{1} \, \mathrm{score}$')
+		plt.xlabel(r'$p_\mathrm{cutoff}$', fontsize=fontsize)
+		plt.ylabel(r'$F_{1} \, \mathrm{score}$', fontsize=fontsize)
 		plt.tight_layout()
-
 
 		if save:
 			plt.savefig(to_file)
@@ -94,7 +91,7 @@ class plots:
 
 
 
-	def _plotParamProb(self, param, kind='kde', gridsize=50, save=False, imfile="FluxProb.pdf", fontscale=1.25):
+	def _plotParamProb(self, param, kind='kde', gridsize=50, save=False, to_file="FluxProb.pdf", fontscale=1.25):
 		"""
 		Function for plotting a parameter of the second
 		component against its probability of being
@@ -146,70 +143,115 @@ class plots:
 		#	Save or display the image
 		# ===================================================
 		if save:
-			plt.savefig(imfile)
+			plt.savefig(to_file)
 			plt.close('all')
 		else:
 			plt.show()
 
-	def _loadLog(self, logfile):
-		"""
-		Function for loading a log file.
 
-		To call:
-			_loadLog(logfile)
-
-		Parameters:
-			logfile
-		"""
-
-		self.dfLog_ = pd.read_csv(logfile, index_col=0)
+	def _plotBinaryParamProb(self, param, save=False, to_file='param_binary.pdf', fontsize=20, 
+							s=10, alpha=0.05, cComplex='darkorange', cSimple='dodgerblue'):
 
 
-	def _plotLoss(self, logfile, save=False, outname='loss_vs_epoch.pdf', losstype = 'adadelta'):
-		#----- Read in the Log File ----------
-		self._loadLog(logfile)
+		plt.figure()
+		plt.scatter(self.dfSimple_[param],  self.dfSimple_['prob'],  color=cSimple, alpha=alpha, s=s)
+		plt.scatter(self.dfComplex_[param], self.dfComplex_['prob'], color=cComplex, alpha=alpha, s=s)
+		plt.xlabel(r'$\sigma$', fontsize=fontsize)
+		plt.ylabel(r'$p_\mathrm{complex}$', fontsize=fontsize)
+
+		if save:
+			plt.savefig(to_file)	
+			plt.close('all')
+
+		else:
+			plt.show()
+
+
+	def _plotLoss(self, logfile=None, save=False, to_file='loss_vs_epoch.pdf', losstype = 'adadelta', fontsize=20):
+
+		# ===================================================
+		#	Load in the logfile or test to see if a
+		#	logfile has already been loaded
+		# ===================================================
+		if logfile == None:
+			try:
+				self.dfLog_
+			except:
+				print('Please pass in the name of a logfile')
+				sys.exit(1)
+		else:
+			try:
+				self._loadLog(logfile)
+			except:
+				print('Failed to load logfile')
+				sys.exit(1)
+
+
 		# -------------- Initialize the Graph ---------
 		fig = plt.figure()
-		plt.xlabel('Epoch')
-		plt.ylabel('Loss (%s)'%(losstype))
-		plt.plot(range(len(self.dfLog_['loss'])), self.dfLog_['loss'], label='Training Loss')
-		plt.plot(range(len(self.dfLog_['val_loss'])), self.dfLog_['val_loss'], label='Validation Loss')
-		plt.legend(fontsize=7.5)
+		plt.rc('text', usetex=True)
+		plt.rc('font', family='serif')	
+		plt.xlabel(r'$\rm Epoch$', fontsize=fontsize)
+		plt.ylabel(r'$\rm Loss$', fontsize=fontsize)
+		plt.plot(self.dfLog_.index, self.dfLog_['loss'], label='Training Loss')
+		plt.plot(self.dfLog_.index, self.dfLog_['val_loss'], label='Validation Loss')
+		plt.legend(loc='best', fontsize=15)
+
 		if save:
-			plt.savefig(outname)
+			plt.savefig(to_file)
 			plt.close()
 		else:
 			plt.show()
 			plt.close()
-	def _plotAcc(self, logfile, save=False, outname='acc_vs_epoch.pdf'):
-		#----- Read in the Log File ----------
-		self._loadLog(logfile)
-		# -------------- Initialize the Graph ---------
+
+
+	def _plotAcc(self, logfile=None, save=False, to_file='acc_vs_epoch.pdf', fontsize=20):
+		"""
+		Function for plotting the accuracy as a function of epoch.
+
+		To call:
+			_plotAcc(logfile, save, imfile)
+
+		Parameters:
+
+		"""
+		# ===================================================
+		#	Load in the logfile or test to see if a
+		#	logfile has already been loaded
+		# ===================================================
+		if logfile == None:
+			try:
+				self.dfLog_
+			except:
+				print('Please pass in the name of a logfile')
+				sys.exit(1)
+		else:
+			try:
+				self._loadLog(logfile)
+			except:
+				print('Failed to load logfile')
+				sys.exit(1)
+
+		# ===================================================
+		#	Plot accuracy vs epoch
+		# ===================================================
 		fig = plt.figure()
-		plt.xlabel('Epoch')
-		plt.ylabel('Binary Accuracy ')
-		plt.plot(range(len(self.dfLog_['binary_accuracy'])), self.dfLog_['binary_accuracy'], label='Training Binary Accuracy')
-		plt.plot(range(len(self.dfLog_['val_binary_accuracy'])), self.dfLog_['val_binary_accuracy'], label='Validation Binary Accuracy')
-		plt.legend(fontsize=7.5)
+		plt.rc('text', usetex=True)
+		plt.rc('font', family='serif')	
+		plt.plot(self.dfLog_.index, self.dfLog_['binary_accuracy'], label='Training Binary Accuracy')
+		plt.plot(self.dfLog_.index, self.dfLog_['val_binary_accuracy'], label='Validation Binary Accuracy')
+		plt.xlabel('Epoch', fontsize=fontsize)
+		plt.ylabel('Binary Accuracy ', fontsize=fontsize)
+		plt.legend(loc='best', fontsize=15)
+
 		if save:
-			plt.savefig(outname)
+			plt.savefig(to_file)
 			plt.close()
 		else:
 			plt.show()
 			plt.close()
 
-	def _loadModel(self, modelFile):
-		"""
-		Function for loading a keras model from a file.
-
-		To call:
-			_loadModel(modelFile)
-
-		Parameters:
-			modelFile
-		"""
-		self.model = load_model(modelFile)
-
+	'''
 	def _loadData(self, directory):
 		"""
 		Function for loading data arrays from a directory.
@@ -231,8 +273,9 @@ class plots:
 		self.s_data = np.load(directory+'S_data.npy')
 		self.sig_data = np.load(directory+'sig.npy')
 		self.u_data = np.load(directory+'U_data.npy')
+	'''
 
-	def _format_param_name(self,param_name):
+	def _format_param_name(self, param_name):
 		"""
 		Function for formatting a string parameter name (chi, depth, etc....) to LateX
 		form for plot labels.
@@ -253,6 +296,7 @@ class plots:
 			return  r'$\Delta \phi$'
 		else:
 			return param_name
+
 
 	def _make_cut(self, param_array, param_name,num_cut=10,prob=0.5, save=False):
 		"""
@@ -358,7 +402,7 @@ class plots:
 				prob -- probability cutoff to classify as complex or simple
 				save -- True if want to save a .pdf
 		"""
-	# ----------- sigma and other params are formatted differently, this handles either case ------
+		# ----------- sigma and other params are formatted differently, this handles either case ------
 		try:
 			cut_vals1 = np.linspace(0.,np.max(param_arr1)[0]*.9,num_cut)
 		except:

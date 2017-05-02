@@ -41,6 +41,9 @@ class loadData:
 		Parameters:
 			dir	data directory
 		"""
+		if dir[-1] != '/':
+			dir += '/'
+
 		self.trainX_, self.trainY_, self.trainLabel_, self.trainChi_, self.trainDepth_, self.trainFlux_, self.trainSig_ = self.__load(dir, abs)
 
 
@@ -56,6 +59,9 @@ class loadData:
 		Parameters:
 			dir	data directory
 		"""
+		if dir[-1] != '/':
+			dir += '/'
+
 		self.testX_, self.testY_, self.testLabel_, self.testChi_, self.testDepth_, self.testFlux_, self.testSig_ = self.__load(dir, abs)
 
 
@@ -73,5 +79,8 @@ class loadData:
 
 		Postcondition:
 		"""
+		if dir[-1] != '/':
+			dir += '/'
+
 		self.validX_, self.validY_, self.validLabel_, self.validChi_, self.validDepth_, self.validFlux_, self.validSig_ = self.__load(dir, abs)
 
