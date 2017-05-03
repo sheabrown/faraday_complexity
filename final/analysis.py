@@ -17,8 +17,75 @@ class analysis:
 		pass
 
 
+	def _applyCutTest(self, param, pMin=None, pMax=None):
+		"""
 
-	def _getComplexParams(self, abs=False):
+		"""
+
+		try:
+			self.dfComplex_
+		except:
+			self._getComplexParams(abs=True)
+
+		try:
+			self.dfSimple_
+		except:
+			self._getSimpleParams()
+
+
+		# ===================================================
+		# 	Remove the complex sources that don't
+		#	satisfy the condition
+		# ===================================================
+		loc1 = self.dfComplex_[param] < pMin if pMin else self.dfComplex_[param] > pMax
+		idx1 = self.dfComplex_['indx'].loc[np.invert(loc1)].values
+		self.dfComplex_.drop(self.dfComplex_.index[loc1], inplace=True)
+
+		# ===================================================
+		# 	If noise, remove the simple sources
+		# ===================================================
+		if param == 'sig':
+			loc2 = self.dfSimple_['sig'] < pMin if pMin else self.dfSimple_['sig'] > pMax
+			idx2 = self.dfSimple_['indx'].loc[np.invert(loc2)].values
+			self.dfSimple_.drop(self.dfSimple_.index[loc2], inplace=True)
+
+			idx1 = np.concatenate((idx1, idx2))
+
+		self.testLabel_ = self.testLabel_[idx1]
+		self.testProb_ = self.testProb_[idx1]
+		self.testPred_ = self.testPred_[idx1]
+
+		"""
+		# ===================================================
+		# 	Remove the complex sources that don't
+		#	satisfy the condition
+		# ===================================================
+		loc1 = self.dfComplex_[param] > pMin if pMin else self.dfComplex_[param] < pMax
+		boolIndx = self.dfComplex_['indx'][loc1].values
+
+		# ===================================================
+		# 	If noise, remove the simple sources
+		# ===================================================
+		if param == 'sig':
+			loc2 = self.dfSimple_['sig'] > pMin if pMin else self.dfSimple_['sig'] < pMax
+			boolval = self.dfSimple_['indx'][loc2]
+			boolIndx = np.concatenate((boolIndx, boolval))
+			self.dfSimple_  = self.dfSimple_.loc[loc2]
+
+		self.dfComplex_ = self.dfComplex_.loc[loc1]
+		
+
+		self.testX_ = self.testX_[boolIndx]
+		self.testY_ = self.testY_[boolIndx]
+		self.testChi_ = self.testChi_[boolIndx]
+		self.testDepth_ = self.testDepth_[boolIndx]
+		self.testLabel_ = self.testLabel_[boolIndx]
+		self.testProb_ = self.testProb_[boolIndx]
+		self.testPred_ = self.testPred_[boolIndx]
+		"""
+
+
+	def _getComplexParams(self, abs=True):
 		"""
 		Function for extracting the data associated with
 		the second component of the complex source.
@@ -83,7 +150,7 @@ class analysis:
 		flux  = pd.Series(flux, name='flux')
 		prob  = pd.Series(prob, name='prob')
 		sig   = pd.Series(sig, name="sig")
-		loc   = pd.Series(loc, name='idx')
+		loc   = pd.Series(loc, name='indx')
 
 		# ===================================================
 		#	Store the results in a dataframe
