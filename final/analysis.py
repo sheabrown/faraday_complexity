@@ -17,7 +17,17 @@ class analysis:
 		pass
 
 
+	def __reset(self, reset):
 
+		if reset:
+			self._getComplexParams(abs=True)
+			self._getSimpleParams()
+			
+		else:
+			try: self.dfComplex_
+			except: self._getComplexParams(abs=True)
+			try: self.dfSimple_
+			except: self._getSimpleParams()
 
 
 	def _applyCut(self, param, pMin=None, pMax=None, prob=0.5, reset=False):
@@ -41,24 +51,13 @@ class analysis:
 			cuts are also applied to the data frame for simple sources.
 		"""
 
-		if reset:
-			self._getComplexParams(abs=True)
-			self._getSimpleParams()
-
-		else:
-			try:
-				self.dfComplex_
-			except:
-				self._getComplexParams(abs=True)
-
-			try:
-				self.dfSimple_
-			except:
-				self._getSimpleParams()
-
+		# ===================================================
+		# 	Reset check and verify data frames exist.
+		# ===================================================
+		self.__reset(reset)
 
 		# ===================================================
-		# 	Remove the complex sources that don't
+		#	Remove the complex sources that don't
 		#	satisfy the condition
 		# ===================================================
 		loc1 = self.dfComplex_[param] < pMin if pMin else self.dfComplex_[param] > pMax
@@ -73,12 +72,12 @@ class analysis:
 			self.dfSimple_.drop(self.dfSimple_.index[loc2], inplace=True)
 
 		# ===================================================
-		#	Update the 
+		#	Update the parameter dataframe
 		# ===================================================
 		self._getParams(prob=prob)
 
 
-	def _getParams(self, prob=0.5):
+	def _getParams(self, prob=0.5, reset=True):
 		"""
 		Function for getting the parameters associated with plotting.
 
@@ -95,19 +94,21 @@ class analysis:
 
 				self.dfParams_
 		"""
-		try:
-			self.dfComplex_
-		except:
-			self._getComplexParams(abs=True)
 
-		try:
-			self.dfSimple_
-		except:
-			self._getSimpleParams()
+		# ===================================================
+		# 	Reset check and verify data frames exist.
+		# ===================================================
+		self.__reset(reset)
 
+		# ===================================================
+		#	Get the prediction probabilities
+		# ===================================================
 		probComplex = self.dfComplex_['prob'].values
 		probSimplex = self.dfSimple_['prob'].values
 
+		# ===================================================
+		#	Create a data frame for storing
+		# ===================================================
 		Sprob = pd.Series(np.concatenate((probComplex, probSimplex)), name='prob')
 		label = pd.Series(np.concatenate((len(probComplex)*[1], len(probSimplex)*[0])), name='label')
 		Spred = pd.Series(np.where(Sprob > prob, 1, 0), name='pred')

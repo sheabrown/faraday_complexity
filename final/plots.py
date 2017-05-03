@@ -167,7 +167,7 @@ class plots:
 			plt.show()
 
 
-	def _plotLoss(self, logfile=None, save=False, to_file='loss_vs_epoch.pdf', losstype = 'adadelta', fontsize=20):
+	def _plotLoss(self, logfile=None, save=False, to_file='loss_vs_epoch.pdf', fontsize=20):
 
 		# ===================================================
 		#	Load in the logfile or test to see if a
