@@ -17,11 +17,84 @@ class analysis:
 		pass
 
 
-	def _applyCutTest(self, param, pMin=None, pMax=None):
+
+
+
+	def _applyCut(self, param, pMin=None, pMax=None, prob=0.5, reset=False):
+		"""
+		Function for cutting observations that don't meet the given constraints.
+		Note that pMin or pMax cannot be used at the same time.
+
+		To call:
+			_applyCut(param, pMin=None, pMax=None, prob=0.5, reset=False)
+
+		Parameters:
+			param		(string) column name in data frame.
+			pMin		minimum cutoff
+			pMax		maximum cutoff
+			prob		threshold probability for classifying complex
+			reset		revert to original data frame before cutting
+
+		Postcondition:
+			Observations that don't satisfy the constrains are removed
+			from the complex data frame. If param == 'sig', then the
+			cuts are also applied to the data frame for simple sources.
 		"""
 
-		"""
+		if reset:
+			self._getComplexParams(abs=True)
+			self._getSimpleParams()
 
+		else:
+			try:
+				self.dfComplex_
+			except:
+				self._getComplexParams(abs=True)
+
+			try:
+				self.dfSimple_
+			except:
+				self._getSimpleParams()
+
+
+		# ===================================================
+		# 	Remove the complex sources that don't
+		#	satisfy the condition
+		# ===================================================
+		loc1 = self.dfComplex_[param] < pMin if pMin else self.dfComplex_[param] > pMax
+		self.dfComplex_.drop(self.dfComplex_.index[loc1], inplace=True)
+
+
+		# ===================================================
+		# 	If noise, remove the simple sources
+		# ===================================================
+		if param == 'sig':
+			loc2 = self.dfSimple_['sig'] < pMin if pMin else self.dfSimple_['sig'] > pMax
+			self.dfSimple_.drop(self.dfSimple_.index[loc2], inplace=True)
+
+		# ===================================================
+		#	Update the 
+		# ===================================================
+		self._getParams(prob=prob)
+
+
+	def _getParams(self, prob=0.5):
+		"""
+		Function for getting the parameters associated with plotting.
+
+		To call:
+			_getParams(prob=0.5)
+
+		Parameters:
+			prob		threshold probabality for complex
+
+		Postcondition:
+			The source label, as well as the model's predicted probability
+			that the source is complex and the predicted label using the
+			threshold probability are stored in the data frame 
+
+				self.dfParams_
+		"""
 		try:
 			self.dfComplex_
 		except:
@@ -32,57 +105,14 @@ class analysis:
 		except:
 			self._getSimpleParams()
 
+		probComplex = self.dfComplex_['prob'].values
+		probSimplex = self.dfSimple_['prob'].values
 
-		# ===================================================
-		# 	Remove the complex sources that don't
-		#	satisfy the condition
-		# ===================================================
-		loc1 = self.dfComplex_[param] < pMin if pMin else self.dfComplex_[param] > pMax
-		idx1 = self.dfComplex_['indx'].loc[np.invert(loc1)].values
-		self.dfComplex_.drop(self.dfComplex_.index[loc1], inplace=True)
+		Sprob = pd.Series(np.concatenate((probComplex, probSimplex)), name='prob')
+		label = pd.Series(np.concatenate((len(probComplex)*[1], len(probSimplex)*[0])), name='label')
+		Spred = pd.Series(np.where(Sprob > prob, 1, 0), name='pred')
 
-		# ===================================================
-		# 	If noise, remove the simple sources
-		# ===================================================
-		if param == 'sig':
-			loc2 = self.dfSimple_['sig'] < pMin if pMin else self.dfSimple_['sig'] > pMax
-			idx2 = self.dfSimple_['indx'].loc[np.invert(loc2)].values
-			self.dfSimple_.drop(self.dfSimple_.index[loc2], inplace=True)
-
-			idx1 = np.concatenate((idx1, idx2))
-
-		self.testLabel_ = self.testLabel_[idx1]
-		self.testProb_ = self.testProb_[idx1]
-		self.testPred_ = self.testPred_[idx1]
-
-		"""
-		# ===================================================
-		# 	Remove the complex sources that don't
-		#	satisfy the condition
-		# ===================================================
-		loc1 = self.dfComplex_[param] > pMin if pMin else self.dfComplex_[param] < pMax
-		boolIndx = self.dfComplex_['indx'][loc1].values
-
-		# ===================================================
-		# 	If noise, remove the simple sources
-		# ===================================================
-		if param == 'sig':
-			loc2 = self.dfSimple_['sig'] > pMin if pMin else self.dfSimple_['sig'] < pMax
-			boolval = self.dfSimple_['indx'][loc2]
-			boolIndx = np.concatenate((boolIndx, boolval))
-			self.dfSimple_  = self.dfSimple_.loc[loc2]
-
-		self.dfComplex_ = self.dfComplex_.loc[loc1]
-		
-
-		self.testX_ = self.testX_[boolIndx]
-		self.testY_ = self.testY_[boolIndx]
-		self.testChi_ = self.testChi_[boolIndx]
-		self.testDepth_ = self.testDepth_[boolIndx]
-		self.testLabel_ = self.testLabel_[boolIndx]
-		self.testProb_ = self.testProb_[boolIndx]
-		self.testPred_ = self.testPred_[boolIndx]
-		"""
+		self.dfParams_ = pd.concat([Sprob, Spred, label], axis=1)
 
 
 	def _getComplexParams(self, abs=True):
@@ -220,19 +250,24 @@ class analysis:
 		self.dfSimple_ = pd.concat([chi, depth, flux, prob, sig, loc], axis=1)
 
 
-	def _getF1(self, step=0.025, save=False, suffix='', dir='./'):
+	def _getF1(self, step=0.025, prob=0.5, save=False, suffix='', dir='./'):
 
 		try:
 			self.testProb_
 		except:
 			self._test()
 
+		try:
+			self.dfParams_
+		except:
+			self._getParams(prob=prob)
+
 		threshold = np.arange(0.5, 1, step)
 		F1 = np.zeros_like(threshold)
 
 		for i, p in enumerate(threshold):
-			testPred = np.where(self.testProb_ > p, 1, 0)
-			F1[i] = f1_score(self.testLabel_, testPred)
+			testPred = np.where(self.dfParams_.prob > p, 1, 0)
+			F1[i] = f1_score(self.dfParams_.label, testPred)
 
 		self.threshold_ = threshold
 		self.F1_ = F1
@@ -242,8 +277,22 @@ class analysis:
 			np.save(dir + 'F1' + suffix + '.npy', F1)
 
 
-	def _getROC(self, data='test', save=False, suffix='', dir='./'):
+	def _getROC(self, prob=0.5, save=False, suffix='', dir='./'):
 
+		try:
+			self.testProb_
+		except:
+			self._test()
+
+		try:
+			self.dfParams_
+		except:
+			self._getParams(prob=prob)
+
+
+		fpr, tpr, thresh = roc_curve(self.dfParams_.label, self.dfParams_.prob)
+
+		""" Old 
 		try:
 			if data == 'train':
 				fpr, tpr, thresh = roc_curve(self.trainLabel_, self.trainProb_)
@@ -254,6 +303,7 @@ class analysis:
 		except:
 			print("No data found. Aborting.")
 			sys.exit(1)
+		"""
 
 		self.fpr_ = fpr
 		self.tpr_ = tpr
