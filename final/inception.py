@@ -2,6 +2,7 @@ from keras.models import Model, load_model
 from keras.layers import Activation, Conv1D, Dense, Dropout, Flatten, Input
 from keras.layers import concatenate
 from keras.layers.pooling import MaxPooling1D, AveragePooling1D
+from keras.layers.normalization import BatchNormalization
 from keras.callbacks import EarlyStopping, CSVLogger
 from keras.optimizers import SGD
 from keras.regularizers import l2
@@ -252,6 +253,88 @@ class inception(loadData, plots, analysis):
 		self.model_.append(concatenate(model))
 
 
+	def _inception2(self, convl=[3, 5], pool=[3], act='elu', strides=2, padding='same', batch=True):
+
+
+
+		# ===========================================
+		#	List for holding the blocks
+		# ===========================================
+		model = []
+
+		# ==================================================
+		#	Check to see if a model has already
+		#	been initialized. If not, create the
+		#	model and add the input
+		# ==================================================		
+		try:
+			self.model_
+
+		except:
+			self.model_ = []
+			self.model_.append(Input(shape=self.trainX_.shape[1:]))
+
+
+		# ==================================================		
+		#	Keep track of layer name
+		# ==================================================		
+		try:
+			self.__inception
+			self.__inception += 1
+		except:
+			self.__inception = 1
+
+		blockname = 'IB'
+
+		# ===========================================
+		#	Apply a 1D convolution. Used as
+		#	an input to the next layers and
+		#	concatenated to the final output
+		# ===========================================
+		name = blockname + str(self.__inception) + '/c1x1'
+
+		convl_1x1_64 = Conv1D(64, kernel_size=1, strides=strides, kernel_regularizer=l2(self.__l2reg), name=name + '_64')(self.model_[-1])
+		convl_1x1_32 = Conv1D(32, kernel_size=1, strides=strides, kernel_regularizer=l2(self.__l2reg), name=name + '_32')(self.model_[-1])
+		
+		bn_layer_32 = BatchNormalization(name=name + '/BN32')(convl_1x1_32)
+		bn_layer_64 = BatchNormalization(name=name + '/BN64')(convl_1x1_64)
+
+		act_layer_32 = Activation(act)(bn_layer_32)
+		act_layer_64 = Activation(act)(bn_layer_64)
+
+		model.append(act_layer_64)
+
+		# ===========================================
+		# 	Perform a 1xc convolution for
+		#	each value of "c" in "convl"
+		# ===========================================
+		for c in convl:
+			name = blockname + str(self.__inception) + '/c1x' + str(c) + '_64'
+			convl_1xc = Conv1D(64, kernel_size=c, strides=1, padding=padding, activation=act, kernel_regularizer=l2(self.__l2reg), name=name)(act_layer_32)
+			batch_layer = BatchNormalization()(convl_1xc)
+			act_layer = Activation(act)(batch_layer)
+			model.append(act_layer)
+
+		# ===========================================
+		# 	Perform a max pooling of size "p"
+		#	each value of "p" in "pool"
+		# ===========================================
+		for p in pool:
+			name = blockname + str(self.__inception) + '/p1x' + str(p)
+			pool_1xp = MaxPooling1D(pool_size=p, strides=strides, padding=padding, name=name)(self.model_[-1])
+	
+			name = name + '_1x1_64'
+			pconvl_1x1 = Conv1D(64, kernel_size=1, padding=padding, activation=act, kernel_regularizer=l2(self.__l2reg), name=name)(pool_1xp)
+			bn_layer = BatchNormalization()(pconvl_1x1)
+			act_layer = Activation(act)(bn_layer)
+			model.append(act_layer)
+
+		# ===========================================
+		#	Concatenate the outputs
+		# ===========================================
+		self.model_.append(concatenate(model))
+
+
 	def _train(self, epochs, batch_size, timeit=True, weights=None, model=None, verbose=1,
 			monitor='loss', min_delta=0, patience=10, log='train.log', class_weight=None):
 		"""
@@ -411,8 +494,9 @@ if __name__ == '__main__':
 	cnn._loadTest("data/test/")
 
 
-	cnn._inception(convl=[3,5,23], pool=[3])
-	cnn._inception(convl=[3,5,23], pool=[3])
+	cnn._inception2(convl=[3,5,23], pool=[3])
+	cnn._inception2(convl=[3,5,23], pool=[3])
+	cnn._inception2(convl=[3,5,23], pool=[3])
 	cnn._convl()
 	cnn._flatten()
 	cnn._dense(256, 'elu', 0.5, 1)
