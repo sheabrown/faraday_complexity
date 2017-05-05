@@ -107,23 +107,23 @@ class inception(loadData, plots, analysis):
 		self.model_.append(Conv1D(filters=filters, kernel_size=kernel_size, strides=strides, padding=padding, kernel_regularizer=l2(self.__l2reg))(self.model_[-1]))
 
 
-	def _dense(self, z, act='relu', drop=0.5, ntimes=1):
+	def _dense(self, z, act='relu', drop=0.5, nlayers=1):
 		"""
 		Function for adding a dense layer to the model.
 
 		To call:
-			_dense(z, act, drop, ntimes)
+			_dense(z, act, drop, nlayers)
 
 		Parameters:
 			z		number of output units
 			act		activation function
 			drop		dropout rate
-			ntimes		number of Dense layers to add
+			nlayers		number of Dense layers to add
 		"""
 		# ==================================================
 		#	Create "ntimes" Dense layers
 		# ==================================================
-		for _ in range(ntimes):
+		for _ in range(nlayers):
 
 			# ==================================================
 			#	Append the dense layer to the model
@@ -241,9 +241,9 @@ class inception(loadData, plots, analysis):
 		# ===========================================
 		for p in pool:
 			name = blockname + str(self.__inception) + '/p1x' + str(p)
-			pool_1xp   = MaxPooling1D(pool_size=p, strides=strides, padding=padding, name=name)(self.model_[-1])
+			pool_1xp = MaxPooling1D(pool_size=p, strides=strides, padding=padding, name=name)(self.model_[-1])
 	
-			name = name + '_1x1_64'
+			name = name + '_c1x1_64'
 			pconvl_1x1 = Conv1D(64, kernel_size=1, padding=padding, activation=act, kernel_regularizer=l2(self.__l2reg), name=name)(pool_1xp)
 			model.append(pconvl_1x1)
 
@@ -336,7 +336,7 @@ class inception(loadData, plots, analysis):
 
 
 	def _train(self, epochs, batch_size, timeit=True, weights=None, model=None, verbose=1,
-			monitor='loss', min_delta=0, patience=10, log='train.log', class_weight=None):
+			monitor='loss', min_delta=0, patience=10, logfile='train.log', class_weight=None):
 		"""
 		Function for fitting a model on the training dataset.
 
@@ -372,7 +372,7 @@ class inception(loadData, plots, analysis):
 		#	training set.
 		# =============================================
 		earlyStop = EarlyStopping(monitor=monitor, min_delta=min_delta, patience=patience, verbose=0, mode='auto')
-		logger = CSVLogger(log)
+		logger = CSVLogger(logfile)
 
 		try:
 			self.validX_
