@@ -3,7 +3,7 @@ from keras.layers import Activation, Conv1D, Dense, Dropout, Flatten, Input
 from keras.layers import concatenate
 from keras.layers.pooling import MaxPooling1D, AveragePooling1D
 from keras.layers.normalization import BatchNormalization
-from keras.callbacks import EarlyStopping, CSVLogger
+from keras.callbacks import EarlyStopping, CSVLogger, ModelCheckpoint
 from keras.optimizers import SGD
 from keras.regularizers import l2
 from sklearn.metrics import log_loss
@@ -335,7 +335,7 @@ class inception(loadData, plots, analysis):
 		self.model_.append(concatenate(model))
 
 
-	def _train(self, epochs, batch_size, timeit=True, weights=None, model=None, verbose=1,
+	def _train(self, epochs=100, batch_size=32, timeit=True, savefile='weights.h5', save_weights_only=True, period=1, verbose=1,
 			monitor='loss', min_delta=0, patience=10, logfile='train.log', class_weight=None):
 		"""
 		Function for fitting a model on the training dataset.
@@ -373,14 +373,15 @@ class inception(loadData, plots, analysis):
 		# =============================================
 		earlyStop = EarlyStopping(monitor=monitor, min_delta=min_delta, patience=patience, verbose=0, mode='auto')
 		logger = CSVLogger(logfile)
-
+		weight = ModelCheckpoint(savefile, monitor=monitor, verbose=1, save_best_only=True, 
+						save_weights_only=save_weights_only, mode='auto', period=period)
 		try:
 			self.validX_
 			self.model_.fit(self.trainX_, self.trainY_, batch_size=batch_size, epochs=epochs, verbose=verbose, 
-					validation_data=(self.validX_, self.validY_), callbacks=[earlyStop, logger], class_weight=class_weight)
+					validation_data=(self.validX_, self.validY_), callbacks=[earlyStop, logger, weight], class_weight=class_weight)
 		except:
 			self.model_.fit(self.trainX_, self.trainY_, batch_size=batch_size, epochs=epochs, verbose=verbose, 
-					validation_data=(self.trainX_, self.trainY_), callbacks=[earlyStop, logger], class_weight=class_weight)
+					validation_data=(self.trainX_, self.trainY_), callbacks=[earlyStop, logger, weight], class_weight=class_weight)
 
 		# =============================================
 		#	Compute the training time (minutes)
@@ -388,19 +389,6 @@ class inception(loadData, plots, analysis):
 		if timeit:
 			time2run = perf_counter() - start
 			print("It took {:.1f} minutes to run".format(time2run/60.))
-
-		# =============================================
-		#	Save the weights (if applicable)
-		# =============================================
-		if weights:
-			self.model_.save_weights(weights)
-
-		# =============================================
-		#	Save the model (if applicable)
-		# =============================================
-		if model:
-			self.model_.save(model)
-
 
 
 	def _test(self, prob=0.5):
