@@ -176,7 +176,7 @@ class simulate:
 
 
 
-	def _simulateNspec(self, N=5, pcomplex=0.35, width=100, seed=8008, save=False, dir='./', timeit=False):
+	def _simulateNspec(self, N=5, pcomplex=0.35, width=100, center=False, seed=8008, save=False, dir='./', timeit=False):
 		"""
 		Function for generating N polarization
 		and Faraday spectra. If the parameters
@@ -185,13 +185,14 @@ class simulate:
 		length.
 
 		To call:
-			_simulateNspec(N, pcomplex, width, seed, 
-						save=False, outdir='./')
+			_simulateNspec(N, pcomplex, width, center, 
+						seed, save=False, outdir='./')
 
 		Parameters:
 			N		number of spectra (if not stored)
 			pcomplex	probabililty the source is complex
 			width		width of faraday spectra to grab
+			center		center spectrum on point (or midpoint)
 			seed		random number seed
 			save		save parameters (boolean)
 			outdir		directory to save parameters
@@ -249,17 +250,10 @@ class simulate:
 			#	Find the peak in the spectra 
 			#	(average if multiple peaks)
 			# =======================================
-
-			""" Currently, peak centering may chose a noisy
-			peak off to the sides, and miss the true peak.
-			"""
-
-			"""			
-			faraday = np.abs(self.faraday_)
-			loc = np.where(faraday == faraday.max())[0]
-			loc = int(np.mean(loc))
-			"""
-
+			if center:
+				faraday = np.abs(self.faraday_)
+				loc = np.where(faraday == faraday.max())[0]
+				loc = int(np.mean(loc))
 
 			try:
 				loc
